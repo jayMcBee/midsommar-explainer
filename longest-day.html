@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Longest Day! ☀️ A Midsummer Story for Little Ones</title>
+<style>
+  :root {
+    --sky-day: linear-gradient(180deg, #7ec8ff 0%, #bfe9ff 60%, #d7f5e0 100%);
+    --sky-night: linear-gradient(180deg, #1a2350 0%, #3a3f7a 70%, #5a6a9a 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Comic Sans MS', 'Baloo', 'Trebuchet MS', system-ui, sans-serif;
+    background: var(--sky-day);
+    transition: background 1.5s ease;
+    overflow: hidden;
+    color: #2a2a4a;
+    user-select: none;
+  }
+  body.night { background: var(--sky-night); }
+
+  /* ---------- Sky scene ---------- */
+  .scene {
+    position: relative;
+    width: 100%;
+    height: 68vh;
+    overflow: hidden;
+  }
+
+  /* Sun */
+  .sun {
+    position: absolute;
+    left: 50%;
+    top: 12%;
+    width: 130px;
+    height: 130px;
+    margin-left: -65px;
+    background: radial-gradient(circle at 50% 50%, #fff7c2 0%, #ffd93b 55%, #ffb800 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 60px 20px rgba(255, 216, 59, 0.7);
+    transition: top 1.5s ease, transform 1.5s ease, opacity 1.2s ease;
+    animation: pulse 3s ease-in-out infinite;
+    z-index: 3;
+  }
+  .sun::before {
+    content: "";
+    position: absolute;
+    inset: -28px;
+    border-radius: 50%;
+    background: conic-gradient(rgba(255,216,59,.0) 0deg, rgba(255,216,59,.55) 20deg, rgba(255,216,59,0) 40deg);
+    animation: spin 14s linear infinite;
+  }
+  .sun .face { position:absolute; inset:0; }
+  .sun .eye { position:absolute; top:42px; width:14px; height:14px; background:#7a4b00; border-radius:50%; }
+  .sun .eye.l { left:38px; } .sun .eye.r { right:38px; }
+  .sun .smile { position:absolute; left:42px; top:66px; width:46px; height:24px; border-bottom:7px solid #7a4b00; border-radius:0 0 46px 46px; }
+  @keyframes pulse { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.06);} }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Moon + stars for night */
+  .moon {
+    position:absolute; right:14%; top:14%;
+    width:90px; height:90px; border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fff 0%, #e9ecff 60%, #c7ccf0 100%);
+    box-shadow: 0 0 40px 10px rgba(220,225,255,.5);
+    opacity:0; transition: opacity 1.5s ease; z-index:2;
+  }
+  body.night .moon { opacity:1; }
+  .stars { position:absolute; inset:0; opacity:0; transition:opacity 1.5s ease; z-index:1; }
+  body.night .stars { opacity:1; }
+  .star { position:absolute; color:#fff; font-size:18px; animation: twinkle 2.5s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100%{ opacity:.3; transform:scale(.8);} 50%{ opacity:1; transform:scale(1.2);} }
+
+  /* Earth (a kid spinning) */
+  .earth-wrap {
+    position:absolute; left:50%; bottom:6%;
+    transform: translateX(-50%);
+    text-align:center; z-index:4;
+  }
+  .earth {
+    font-size:120px; line-height:1;
+    display:inline-block;
+    transform-origin:50% 60%;
+    transition: transform 1.5s ease;
+  }
+  .earth.spinning { animation: earthspin 4s linear infinite; }
+  @keyframes earthspin { to { transform: rotate(360deg); } }
+  /* tilt + lean states */
+  body.lean-toward .earth { transform: rotate(-23deg) translateY(-6px); }
+  body.lean-away   .earth { transform: rotate(23deg); }
+
+  .ground {
+    position:absolute; bottom:0; left:0; right:0; height:16%;
+    background: linear-gradient(180deg, #8fe388 0%, #5cc25a 100%);
+    border-top: 6px solid #46a346;
+    z-index:2;
+  }
+  .flower { position:absolute; bottom:6%; font-size:30px; z-index:3; }
+
+  /* ---------- Text / controls ---------- */
+  .panel {
+    position:relative;
+    height:32vh;
+    background:#fff;
+    border-top: 8px dashed #ffd93b;
+    padding: 18px 20px 14px;
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    z-index:10;
+  }
+  .speech {
+    font-size: clamp(20px, 3.4vw, 34px);
+    text-align:center;
+    line-height:1.35;
+    max-width: 1000px;
+    font-weight:bold;
+    color:#324;
+    min-height: 2.6em;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .controls { display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  button {
+    font-family:inherit; font-weight:bold;
+    font-size: clamp(16px, 2.4vw, 22px);
+    padding: 12px 26px;
+    border:none; border-radius: 40px;
+    cursor:pointer;
+    color:#fff;
+    background: linear-gradient(180deg, #ff8fb1, #ff5e8a);
+    box-shadow: 0 5px 0 #d63e6a;
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  button:active { transform: translateY(4px); box-shadow: 0 1px 0 #d63e6a; }
+  button.next { background: linear-gradient(180deg, #7ed957, #46c11a); box-shadow:0 5px 0 #2f8a10; }
+  button.replay { background: linear-gradient(180deg, #8fc7ff, #4aa3ff); box-shadow:0 5px 0 #2f7ad6; }
+  .dots { display:flex; gap:8px; }
+  .dot { width:14px; height:14px; border-radius:50%; background:#e0e0e0; transition:background .3s; }
+  .dot.on { background:#ffd93b; }
+
+  .froggy { font-size:46px; display:inline-block; }
+  body.dance .froggy { animation: hop .6s ease-in-out infinite; }
+  @keyframes hop { 0%,100%{ transform:translateY(0);} 40%{ transform:translateY(-26px);} }
+
+  .title-tag {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    background:#fff; color:#ff5e8a; font-weight:bold;
+    padding:6px 18px; border-radius:30px; font-size: clamp(14px,2vw,20px);
+    box-shadow:0 4px 0 rgba(0,0,0,.08); z-index:6; white-space:nowrap;
+  }
+</style>
+</head>
+<body class="lean-toward">
+  <div class="scene">
+    <div class="title-tag">🌼 Why is the day SO long? 🌼</div>
+
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+
+    <div class="sun" id="sun">
+      <div class="face">
+        <div class="eye l"></div><div class="eye r"></div>
+        <div class="smile"></div>
+      </div>
+    </div>
+
+    <div class="ground"></div>
+    <span class="flower" style="left:8%">🌷</span>
+    <span class="flower" style="left:20%">🌸</span>
+    <span class="flower" style="left:78%">🌼</span>
+    <span class="flower" style="left:90%">🌻</span>
+
+    <div class="earth-wrap">
+      <div class="earth" id="earth">🌍</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="speech" id="speech"></div>
+    <div class="controls">
+      <button class="replay" id="back">⟲ Back</button>
+      <div class="dots" id="dots"></div>
+      <button class="next" id="next">Next ▶</button>
+    </div>
+  </div>
+
+<script>
+  // Each scene: the words + what the picture should do.
+  const scenes = [
+    {
+      text: "This is our Earth! 🌍 It is a giant round ball that floats in space.",
+      apply: b => { b.className = ""; setEarth(false, ""); }
+    },
+    {
+      text: "The Earth SPINS round and round, like a slow twirl. 🔄",
+      apply: b => { b.className = ""; setEarth(true, ""); }
+    },
+    {
+      text: "When our side faces the Sun ☀️ it is DAYTIME. Good morning!",
+      apply: b => { b.className = ""; setEarth(true, ""); }
+    },
+    {
+      text: "When our side turns away, it gets dark. 🌙 That is NIGHT-time. Shhh, sleep!",
+      apply: b => { b.className = "night"; setEarth(true, ""); }
+    },
+    {
+      text: "Here is the secret… the Earth LEANS over! It is tilted, not standing straight. ↗️",
+      apply: b => { b.className = ""; setEarth(true, "lean-toward"); }
+    },
+    {
+      text: "Right now WE lean TOWARD the Sun. So we get LOTS and LOTS of sunshine! ☀️☀️",
+      apply: b => { b.className = "lean-toward"; setEarth(true, "lean-toward"); sunHigh(); }
+    },
+    {
+      text: "That makes today the LONGEST day of the whole year — Midsummer! The Sun stays up super late. 🎉",
+      apply: b => { b.className = "lean-toward"; setEarth(true, "lean-toward"); sunHigh(); }
+    },
+    {
+      text: "In winter we lean AWAY from the Sun, so days are short and the Sun stays low. ❄️🌥️",
+      apply: b => { b.className = "lean-away night"; setEarth(true, "lean-away"); sunLow(); }
+    },
+    {
+      text: "So let's celebrate the longest day! Wear flowers 🌸, eat strawberries 🍓, and hop like little frogs!",
+      apply: b => { b.className = "lean-toward dance"; setEarth(true, "lean-toward"); sunHigh(); froggyTime(); }
+    }
+  ];
+
+  const body = document.body;
+  const speech = document.getElementById('speech');
+  const earth = document.getElementById('earth');
+  const sun = document.getElementById('sun');
+  const dotsBox = document.getElementById('dots');
+  let i = 0;
+
+  function setEarth(spin, lean) {
+    earth.classList.toggle('spinning', spin);
+    // lean is applied via body class in apply(); keep helper for clarity
+  }
+  function sunHigh() { sun.style.top = '8%'; sun.style.opacity = '1'; }
+  function sunLow()  { sun.style.top = '30%'; sun.style.opacity = '.9'; }
+  function froggyTime() {
+    speech.innerHTML = scenes[8].text + ' <span class="froggy">🐸</span>';
+  }
+
+  // build star field
+  const starsEl = document.getElementById('stars');
+  for (let s = 0; s < 26; s++) {
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '✦';
+    star.style.left = Math.random() * 96 + '%';
+    star.style.top = Math.random() * 55 + '%';
+    star.style.fontSize = (10 + Math.random() * 16) + 'px';
+    star.style.animationDelay = (Math.random() * 2.5) + 's';
+    starsEl.appendChild(star);
+  }
+
+  // build dots
+  scenes.forEach((_, idx) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    dotsBox.appendChild(d);
+  });
+  const dots = [...dotsBox.children];
+
+  function render() {
+    const sc = scenes[i];
+    sun.style.top = '12%'; sun.style.opacity = '1'; // reset sun each scene
+    sc.apply(body);
+    if (i !== 8) speech.textContent = sc.text; // scene 8 sets its own innerHTML
+    dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
+    document.getElementById('back').style.visibility = i === 0 ? 'hidden' : 'visible';
+    document.getElementById('next').textContent = i === scenes.length - 1 ? '↺ Start over' : 'Next ▶';
+  }
+
+  document.getElementById('next').onclick = () => {
+    i = (i + 1) % scenes.length;
+    render();
+  };
+  document.getElementById('back').onclick = () => {
+    if (i > 0) { i--; render(); }
+  };
+  // arrow keys + spacebar for grown-up helpers
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); document.getElementById('next').click(); }
+    if (e.key === 'ArrowLeft') document.getElementById('back').click();
+  });
+
+  render();
+</script>
+</body>
+</html>
