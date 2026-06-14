@@ -10,14 +10,17 @@
     --sky-night: linear-gradient(180deg, #1a2350 0%, #3a3f7a 70%, #5a6a9a 100%);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
     font-family: 'Comic Sans MS', 'Baloo', 'Trebuchet MS', system-ui, sans-serif;
     background: var(--sky-day);
     transition: background 1.5s ease;
-    overflow: hidden;
     color: #2a2a4a;
     user-select: none;
+    min-height: 100vh;
+    min-height: 100dvh;        /* mobile-safe full height */
+    display: flex;
+    flex-direction: column;
   }
   body.night { background: var(--sky-night); }
 
@@ -25,7 +28,8 @@
   .scene {
     position: relative;
     width: 100%;
-    height: 68vh;
+    flex: 1 1 auto;
+    min-height: 320px;         /* never collapses too small */
     overflow: hidden;
   }
 
@@ -101,13 +105,15 @@
 
   /* ---------- Text / controls ---------- */
   .panel {
-    position:relative;
-    height:32vh;
+    position: sticky;          /* always stays on screen */
+    bottom: 0;
+    flex: 0 0 auto;
     background:#fff;
     border-top: 8px dashed #ffd93b;
-    padding: 18px 20px 14px;
-    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; align-items:center; gap:14px;
     z-index:10;
+    box-shadow: 0 -6px 20px rgba(0,0,0,.12);
   }
   .speech {
     font-size: clamp(20px, 3.4vw, 34px);
