@@ -3,296 +3,380 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The Longest Day! ☀️ A Midsummer Story for Little Ones</title>
+<title>Why is the Day So Long? ☀️ The Real Reason (for little ones)</title>
 <style>
-  :root {
-    --sky-day: linear-gradient(180deg, #7ec8ff 0%, #bfe9ff 60%, #d7f5e0 100%);
-    --sky-night: linear-gradient(180deg, #1a2350 0%, #3a3f7a 70%, #5a6a9a 100%);
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
   body {
     font-family: 'Comic Sans MS', 'Baloo', 'Trebuchet MS', system-ui, sans-serif;
-    background: var(--sky-day);
-    transition: background 1.5s ease;
-    color: #2a2a4a;
+    color: #eaf2ff;
+    background: #0b1026;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
     user-select: none;
-    min-height: 100vh;
-    min-height: 100dvh;        /* mobile-safe full height */
-    display: flex;
-    flex-direction: column;
   }
-  body.night { background: var(--sky-night); }
+  .stage { position: relative; flex: 1 1 auto; min-height: 300px; }
+  canvas { display: block; width: 100%; height: 100%; }
 
-  /* ---------- Sky scene ---------- */
-  .scene {
-    position: relative;
-    width: 100%;
-    flex: 1 1 auto;
-    min-height: 320px;         /* never collapses too small */
-    overflow: hidden;
+  .titletag {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+    padding: 6px 16px; border-radius: 30px; font-size: clamp(13px,2vw,18px);
+    font-weight: bold; white-space: nowrap; backdrop-filter: blur(4px);
   }
+  .readout {
+    position: absolute; top: 54px; left: 50%; transform: translateX(-50%);
+    text-align: center; width: min(92%, 620px);
+  }
+  .hours {
+    font-size: clamp(20px, 4vw, 34px); font-weight: bold; color: #ffd93b;
+    text-shadow: 0 2px 6px rgba(0,0,0,.5);
+  }
+  .bar {
+    margin: 8px auto 0; width: min(90%, 460px); height: 18px; border-radius: 12px;
+    overflow: hidden; display: flex; border: 2px solid rgba(255,255,255,.4);
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+  .bar .day { background: linear-gradient(180deg,#ffe98a,#ffd11a); }
+  .bar .night { background: linear-gradient(180deg,#2a356e,#161d44); }
+  .barlabels { display:flex; justify-content:space-between; width:min(90%,460px); margin:3px auto 0; font-size:12px; opacity:.85; }
 
-  /* Sun */
-  .sun {
-    position: absolute;
-    left: 50%;
-    top: 12%;
-    width: 130px;
-    height: 130px;
-    margin-left: -65px;
-    background: radial-gradient(circle at 50% 50%, #fff7c2 0%, #ffd93b 55%, #ffb800 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 60px 20px rgba(255, 216, 59, 0.7);
-    transition: top 1.5s ease, transform 1.5s ease, opacity 1.2s ease;
-    animation: pulse 3s ease-in-out infinite;
-    z-index: 3;
-  }
-  .sun::before {
-    content: "";
-    position: absolute;
-    inset: -28px;
-    border-radius: 50%;
-    background: conic-gradient(rgba(255,216,59,.0) 0deg, rgba(255,216,59,.55) 20deg, rgba(255,216,59,0) 40deg);
-    animation: spin 14s linear infinite;
-  }
-  .sun .face { position:absolute; inset:0; }
-  .sun .eye { position:absolute; top:42px; width:14px; height:14px; background:#7a4b00; border-radius:50%; }
-  .sun .eye.l { left:38px; } .sun .eye.r { right:38px; }
-  .sun .smile { position:absolute; left:42px; top:66px; width:46px; height:24px; border-bottom:7px solid #7a4b00; border-radius:0 0 46px 46px; }
-  @keyframes pulse { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.06);} }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Moon + stars for night */
-  .moon {
-    position:absolute; right:14%; top:14%;
-    width:90px; height:90px; border-radius:50%;
-    background: radial-gradient(circle at 35% 35%, #fff 0%, #e9ecff 60%, #c7ccf0 100%);
-    box-shadow: 0 0 40px 10px rgba(220,225,255,.5);
-    opacity:0; transition: opacity 1.5s ease; z-index:2;
-  }
-  body.night .moon { opacity:1; }
-  .stars { position:absolute; inset:0; opacity:0; transition:opacity 1.5s ease; z-index:1; }
-  body.night .stars { opacity:1; }
-  .star { position:absolute; color:#fff; font-size:18px; animation: twinkle 2.5s ease-in-out infinite; }
-  @keyframes twinkle { 0%,100%{ opacity:.3; transform:scale(.8);} 50%{ opacity:1; transform:scale(1.2);} }
-
-  /* Earth (a kid spinning) */
-  .earth-wrap {
-    position:absolute; left:50%; bottom:6%;
-    transform: translateX(-50%);
-    text-align:center; z-index:4;
-  }
-  .earth {
-    font-size:120px; line-height:1;
-    display:inline-block;
-    transform-origin:50% 60%;
-    transition: transform 1.5s ease;
-  }
-  .earth.spinning { animation: earthspin 4s linear infinite; }
-  @keyframes earthspin { to { transform: rotate(360deg); } }
-  /* tilt + lean states */
-  body.lean-toward .earth { transform: rotate(-23deg) translateY(-6px); }
-  body.lean-away   .earth { transform: rotate(23deg); }
-
-  .ground {
-    position:absolute; bottom:0; left:0; right:0; height:16%;
-    background: linear-gradient(180deg, #8fe388 0%, #5cc25a 100%);
-    border-top: 6px solid #46a346;
-    z-index:2;
-  }
-  .flower { position:absolute; bottom:6%; font-size:30px; z-index:3; }
-
-  /* ---------- Text / controls ---------- */
+  /* ---------- bottom panel ---------- */
   .panel {
-    position: sticky;          /* always stays on screen */
-    bottom: 0;
-    flex: 0 0 auto;
-    background:#fff;
-    border-top: 8px dashed #ffd93b;
-    padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
-    display:flex; flex-direction:column; align-items:center; gap:14px;
-    z-index:10;
-    box-shadow: 0 -6px 20px rgba(0,0,0,.12);
+    position: sticky; bottom: 0; flex: 0 0 auto;
+    background: #121a3a; border-top: 5px solid #ffd93b;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
+    box-shadow: 0 -6px 22px rgba(0,0,0,.5); z-index: 10;
   }
   .speech {
-    font-size: clamp(20px, 3.4vw, 34px);
-    text-align:center;
-    line-height:1.35;
-    max-width: 1000px;
-    font-weight:bold;
-    color:#324;
-    min-height: 2.6em;
+    font-size: clamp(16px, 2.7vw, 24px); font-weight: bold; text-align: center;
+    line-height: 1.35; max-width: 920px; min-height: 2.6em;
     display:flex; align-items:center; justify-content:center;
   }
-  .controls { display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .grownup { font-size: clamp(11px,1.8vw,14px); opacity: .75; max-width: 880px; text-align:center; font-weight:normal; display:none; }
+  .grownup.show { display:block; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items:center; }
   button {
-    font-family:inherit; font-weight:bold;
-    font-size: clamp(16px, 2.4vw, 22px);
-    padding: 12px 26px;
-    border:none; border-radius: 40px;
-    cursor:pointer;
-    color:#fff;
-    background: linear-gradient(180deg, #ff8fb1, #ff5e8a);
-    box-shadow: 0 5px 0 #d63e6a;
-    transition: transform .08s ease, box-shadow .08s ease;
+    font-family: inherit; font-weight: bold; font-size: clamp(14px,2.2vw,18px);
+    padding: 10px 18px; border: none; border-radius: 30px; cursor: pointer; color: #fff;
+    background: linear-gradient(180deg,#5b6bd6,#3a49b3); box-shadow: 0 4px 0 #232f80;
+    transition: transform .08s, box-shadow .08s;
   }
-  button:active { transform: translateY(4px); box-shadow: 0 1px 0 #d63e6a; }
-  button.next { background: linear-gradient(180deg, #7ed957, #46c11a); box-shadow:0 5px 0 #2f8a10; }
-  button.replay { background: linear-gradient(180deg, #8fc7ff, #4aa3ff); box-shadow:0 5px 0 #2f7ad6; }
-  .dots { display:flex; gap:8px; }
-  .dot { width:14px; height:14px; border-radius:50%; background:#e0e0e0; transition:background .3s; }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 #232f80; }
+  button.season.on { outline: 3px solid #ffd93b; }
+  button.summer { background: linear-gradient(180deg,#ffb04a,#ff8a1e); box-shadow:0 4px 0 #c5670c; }
+  button.winter { background: linear-gradient(180deg,#6fd0ff,#2aa6ee); box-shadow:0 4px 0 #1675ab; }
+  button.equi   { background: linear-gradient(180deg,#9be36f,#5fbf3a); box-shadow:0 4px 0 #3a8a1e; }
+  button.next   { background: linear-gradient(180deg,#7ed957,#46c11a); box-shadow:0 4px 0 #2f8a10; }
+  button.ghost  { background: rgba(255,255,255,.12); box-shadow:0 4px 0 rgba(0,0,0,.35); }
+  .dots { display:flex; gap:7px; }
+  .dot { width:11px; height:11px; border-radius:50%; background:#3a447a; }
   .dot.on { background:#ffd93b; }
 
-  .froggy { font-size:46px; display:inline-block; }
-  body.dance .froggy { animation: hop .6s ease-in-out infinite; }
-  @keyframes hop { 0%,100%{ transform:translateY(0);} 40%{ transform:translateY(-26px);} }
-
-  .title-tag {
-    position:absolute; top:10px; left:50%; transform:translateX(-50%);
-    background:#fff; color:#ff5e8a; font-weight:bold;
-    padding:6px 18px; border-radius:30px; font-size: clamp(14px,2vw,20px);
-    box-shadow:0 4px 0 rgba(0,0,0,.08); z-index:6; white-space:nowrap;
-  }
+  .slider { display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; }
+  input[type=range]{ accent-color:#ffd93b; }
 </style>
 </head>
-<body class="lean-toward">
-  <div class="scene">
-    <div class="title-tag">🌼 Why is the day SO long? 🌼</div>
-
-    <div class="stars" id="stars"></div>
-    <div class="moon"></div>
-
-    <div class="sun" id="sun">
-      <div class="face">
-        <div class="eye l"></div><div class="eye r"></div>
-        <div class="smile"></div>
-      </div>
-    </div>
-
-    <div class="ground"></div>
-    <span class="flower" style="left:8%">🌷</span>
-    <span class="flower" style="left:20%">🌸</span>
-    <span class="flower" style="left:78%">🌼</span>
-    <span class="flower" style="left:90%">🌻</span>
-
-    <div class="earth-wrap">
-      <div class="earth" id="earth">🌍</div>
+<body>
+  <div class="stage">
+    <canvas id="c"></canvas>
+    <div class="titletag">🌞 Why is the day so long? The REAL reason 🌍</div>
+    <div class="readout">
+      <div class="hours" id="hours">☀️ Sun is up about 16 hours</div>
+      <div class="bar"><div class="day" id="barday" style="width:67%"></div><div class="night" id="barnight" style="width:33%"></div></div>
+      <div class="barlabels"><span>🌙 night</span><span>one whole day (24 h)</span><span>night 🌙</span></div>
     </div>
   </div>
 
   <div class="panel">
     <div class="speech" id="speech"></div>
-    <div class="controls">
-      <button class="replay" id="back">⟲ Back</button>
+    <div class="grownup" id="grownup"></div>
+    <div class="row">
+      <button class="season summer on" data-season="1">☀️ Summer</button>
+      <button class="season equi"   data-season="0">🍂 Spring/Autumn</button>
+      <button class="season winter" data-season="-1">❄️ Winter</button>
+      <button class="ghost" id="playBtn">⏸ Pause spin</button>
+    </div>
+    <div class="row">
+      <div class="slider">🏠 Where we live:
+        <span id="latlbl" style="min-width:130px; display:inline-block">far north (51°)</span>
+        <input type="range" id="lat" min="0" max="80" value="51" />
+      </div>
+    </div>
+    <div class="row">
+      <button class="ghost" id="back">⟲ Back</button>
       <div class="dots" id="dots"></div>
       <button class="next" id="next">Next ▶</button>
+      <button class="ghost" id="ginfo">🧑‍🏫 Grown-up facts</button>
     </div>
   </div>
 
 <script>
-  // Each scene: the words + what the picture should do.
-  const scenes = [
-    {
-      text: "This is our Earth! 🌍 It is a giant round ball that floats in space.",
-      apply: b => { b.className = ""; setEarth(false, ""); }
-    },
-    {
-      text: "The Earth SPINS round and round, like a slow twirl. 🔄",
-      apply: b => { b.className = ""; setEarth(true, ""); }
-    },
-    {
-      text: "When our side faces the Sun ☀️ it is DAYTIME. Good morning!",
-      apply: b => { b.className = ""; setEarth(true, ""); }
-    },
-    {
-      text: "When our side turns away, it gets dark. 🌙 That is NIGHT-time. Shhh, sleep!",
-      apply: b => { b.className = "night"; setEarth(true, ""); }
-    },
-    {
-      text: "Here is the secret… the Earth LEANS over! It is tilted, not standing straight. ↗️",
-      apply: b => { b.className = ""; setEarth(true, "lean-toward"); }
-    },
-    {
-      text: "Right now WE lean TOWARD the Sun. So we get LOTS and LOTS of sunshine! ☀️☀️",
-      apply: b => { b.className = "lean-toward"; setEarth(true, "lean-toward"); sunHigh(); }
-    },
-    {
-      text: "That makes today the LONGEST day of the whole year — Midsummer! The Sun stays up super late. 🎉",
-      apply: b => { b.className = "lean-toward"; setEarth(true, "lean-toward"); sunHigh(); }
-    },
-    {
-      text: "In winter we lean AWAY from the Sun, so days are short and the Sun stays low. ❄️🌥️",
-      apply: b => { b.className = "lean-away night"; setEarth(true, "lean-away"); sunLow(); }
-    },
-    {
-      text: "So let's celebrate the longest day! Wear flowers 🌸, eat strawberries 🍓, and hop like little frogs!",
-      apply: b => { b.className = "lean-toward dance"; setEarth(true, "lean-toward"); sunHigh(); froggyTime(); }
-    }
+const TILT = 23.5 * Math.PI/180;   // Earth's real axial tilt
+const cnv = document.getElementById('c');
+const ctx = cnv.getContext('2d');
+
+let state = {
+  season: 1,        // +1 summer, 0 equinox, -1 winter  (declination = season*TILT)
+  latDeg: 51,       // viewer latitude
+  rho: 0,           // rotation angle (time of day)
+  playing: true,
+};
+
+/* ---------- geometry ----------
+   World axes:  x = right,  y = toward viewer,  z = up.
+   Sun is to the LEFT; sunlight travels +x. Lit hemisphere = x < 0.
+   Earth's axis tilts within the screen plane by a = season*TILT
+   (north pole toward the Sun in summer).                              */
+function axisFrame(a){
+  const n  = [-Math.sin(a), 0, Math.cos(a)];   // north pole direction
+  const e1 = [ Math.cos(a), 0, Math.sin(a)];   // equator ref, in screen plane
+  const e2 = [0, 1, 0];                        // toward viewer
+  return {n,e1,e2};
+}
+// point at latitude phi, rotation rho, on the tilted spinning Earth
+function surfacePoint(phi, rho, F){
+  const cp=Math.cos(phi), sp=Math.sin(phi), cr=Math.cos(rho), sr=Math.sin(rho);
+  return [
+    sp*F.n[0] + cp*(cr*F.e1[0] + sr*F.e2[0]),
+    sp*F.n[1] + cp*(cr*F.e1[1] + sr*F.e2[1]),
+    sp*F.n[2] + cp*(cr*F.e1[2] + sr*F.e2[2]),
   ];
+}
+// daylight fraction (the real formula): day when point.x < 0  ->  cos(rho) < tanφ·tanδ
+function daylightFraction(phiDeg, a){
+  const phi = phiDeg*Math.PI/180;
+  let K = Math.tan(phi)*Math.tan(a);
+  K = Math.max(-1, Math.min(1, K));
+  return 1 - Math.acos(K)/Math.PI;     // fraction of 24h that is daytime
+}
 
-  const body = document.body;
-  const speech = document.getElementById('speech');
-  const earth = document.getElementById('earth');
-  const sun = document.getElementById('sun');
-  const dotsBox = document.getElementById('dots');
-  let i = 0;
+/* ---------- drawing ---------- */
+let W,H,DPR,R,cx,cy;
+function resize(){
+  DPR = window.devicePixelRatio || 1;
+  W = cnv.clientWidth; H = cnv.clientHeight;
+  cnv.width = W*DPR; cnv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  R = Math.min(W*0.20, H*0.34);          // Earth radius in px
+  cx = W*0.62; cy = H*0.50;              // Earth a bit right of centre
+}
+window.addEventListener('resize', resize);
 
-  function setEarth(spin, lean) {
-    earth.classList.toggle('spinning', spin);
-    // lean is applied via body class in apply(); keep helper for clarity
+function P2S(p){ return [cx + p[0]*R, cy - p[2]*R]; }  // project x,z to screen
+
+function draw(){
+  const a = state.season * TILT;
+  const F = axisFrame(a);
+  ctx.clearRect(0,0,W,H);
+
+  // background sky
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1130'); g.addColorStop(1,'#161f4a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // ---- Sun (left) + horizontal parallel rays ----
+  const sunX = Math.max(70, cx - R*2.7), sunY = cy;
+  const sunR = Math.min(R*0.85, 70);
+  ctx.fillStyle = '#ffd11a';
+  ctx.shadowColor='#ffd11a'; ctx.shadowBlur=40;
+  ctx.beginPath(); ctx.arc(sunX,sunY,sunR,0,7); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#7a4b00';
+  ctx.beginPath(); ctx.arc(sunX-sunR*0.3, sunY-sunR*0.2, 5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(sunX+sunR*0.3, sunY-sunR*0.2, 5,0,7); ctx.fill();
+  ctx.strokeStyle='#7a4b00'; ctx.lineWidth=4; ctx.beginPath();
+  ctx.arc(sunX, sunY+sunR*0.15, sunR*0.35, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+  // rays
+  ctx.strokeStyle='rgba(255,224,90,.55)'; ctx.lineWidth=3;
+  for(let k=-3;k<=3;k++){
+    const ry = sunY + k*(R*0.42);
+    const x0 = sunX + sunR + 12, x1 = cx - R - 14;
+    ctx.beginPath(); ctx.moveTo(x0,ry); ctx.lineTo(x1,ry); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1,ry); ctx.lineTo(x1-12,ry-7); ctx.lineTo(x1-12,ry+7); ctx.closePath();
+    ctx.fillStyle='rgba(255,224,90,.55)'; ctx.fill();
   }
-  function sunHigh() { sun.style.top = '8%'; sun.style.opacity = '1'; }
-  function sunLow()  { sun.style.top = '30%'; sun.style.opacity = '.9'; }
-  function froggyTime() {
-    speech.innerHTML = scenes[8].text + ' <span class="froggy">🐸</span>';
+
+  // ---- Earth disk: left half = day, right half = night ----
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
+  // night (right)
+  ctx.fillStyle='#0f1640'; ctx.fillRect(cx,cy-R, R, 2*R);
+  // day (left)
+  const dg = ctx.createLinearGradient(cx-R,0,cx,0);
+  dg.addColorStop(0,'#2f8fd6'); dg.addColorStop(1,'#7ec8ff');
+  ctx.fillStyle=dg; ctx.fillRect(cx-R,cy-R, R, 2*R);
+  // a hint of land on both halves
+  ctx.restore();
+
+  // rotating surface grid dots (front hemisphere only) -> shows REAL spin about the axis
+  const lats=[-60,-30,0,30,60];
+  for(const Ld of lats){
+    const phi=Ld*Math.PI/180;
+    for(let m=0;m<12;m++){
+      const lon = m/12*2*Math.PI;
+      const p = surfacePoint(phi, state.rho+lon, F);
+      if(p[1] <= 0) continue;            // back hemisphere -> hidden behind globe
+      const [sx,sy]=P2S(p);
+      const lit = p[0] < 0;
+      ctx.fillStyle = lit ? 'rgba(255,255,255,.55)' : 'rgba(150,170,220,.30)';
+      ctx.beginPath(); ctx.arc(sx,sy, 2.4, 0,7); ctx.fill();
+    }
   }
 
-  // build star field
-  const starsEl = document.getElementById('stars');
-  for (let s = 0; s < 26; s++) {
-    const star = document.createElement('span');
-    star.className = 'star';
-    star.textContent = '✦';
-    star.style.left = Math.random() * 96 + '%';
-    star.style.top = Math.random() * 55 + '%';
-    star.style.fontSize = (10 + Math.random() * 16) + 'px';
-    star.style.animationDelay = (Math.random() * 2.5) + 's';
-    starsEl.appendChild(star);
+  // terminator line (vertical) + Earth outline
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx,cy-R); ctx.lineTo(cx,cy+R); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+
+  // ---- rotation axis (tilted, fixed in space) + north star ----
+  const top = [F.n[0]*R*1.5, 0, F.n[2]*R*1.5];
+  const bot = [-F.n[0]*R*1.5, 0, -F.n[2]*R*1.5];
+  const [tx,ty]=P2S(top), [bx,by]=P2S(bot);
+  ctx.strokeStyle='#ff6b9d'; ctx.lineWidth=4; ctx.setLineDash([8,6]);
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(tx,ty); ctx.stroke();
+  ctx.setLineDash([]);
+  // north star the axis points to
+  ctx.fillStyle='#fff'; ctx.font='20px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('✦', tx, ty-6);
+  ctx.fillStyle='#ffb3cd'; ctx.font='bold 13px sans-serif';
+  ctx.fillText('N', tx + (state.season>=0? 16:-16), ty+14);
+
+  // ---- our home: latitude circle path + moving pin ----
+  const phi = state.latDeg*Math.PI/180;
+  // full ring (faint, shows where home travels in one day)
+  ctx.lineWidth=2;
+  let prev=null;
+  for(let i=0;i<=120;i++){
+    const r = i/120*2*Math.PI;
+    const p = surfacePoint(phi, r, F);
+    const [sx,sy]=P2S(p);
+    if(prev){
+      const front = p[1]>0;
+      ctx.strokeStyle = front ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.18)';
+      ctx.beginPath(); ctx.moveTo(prev[0],prev[1]); ctx.lineTo(sx,sy); ctx.stroke();
+    }
+    prev=[sx,sy];
   }
+  // the home pin at current time
+  const ph = surfacePoint(phi, state.rho, F);
+  const [hx,hy]=P2S(ph);
+  const litHome = ph[0] < 0;
+  const onFront = ph[1] >= 0;
+  ctx.globalAlpha = onFront ? 1 : 0.45;
+  ctx.fillStyle = litHome ? '#ffd93b' : '#9fb0e6';
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(hx,hy, 9, 0,7); ctx.fill(); ctx.stroke();
+  ctx.font='15px sans-serif'; ctx.fillText(litHome?'🏠':'🏠', hx, hy);
+  ctx.globalAlpha=1;
+  // little label
+  ctx.fillStyle = litHome ? '#ffd93b' : '#9fb0e6';
+  ctx.font='bold 13px sans-serif'; ctx.textAlign='left';
+  ctx.fillText(litHome? '  ← our home: DAY ☀️' : '  ← our home: NIGHT 🌙', hx+8, hy-12);
+  ctx.textAlign='center';
 
-  // build dots
-  scenes.forEach((_, idx) => {
-    const d = document.createElement('div');
-    d.className = 'dot';
-    dotsBox.appendChild(d);
-  });
-  const dots = [...dotsBox.children];
+  // labels: which way is the lean
+  ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font='bold 14px sans-serif';
+  const leanTxt = state.season>0 ? 'leaning TOWARD the Sun' : state.season<0 ? 'leaning AWAY from the Sun' : 'leaning neither way';
+  ctx.fillText(leanTxt, cx, cy+R+26);
+  // distance-is-constant reminder
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='12px sans-serif';
+  ctx.fillText('(the Sun stays the SAME distance away all year)', cx, cy+R+46);
+}
 
-  function render() {
-    const sc = scenes[i];
-    sun.style.top = '12%'; sun.style.opacity = '1'; // reset sun each scene
-    sc.apply(body);
-    if (i !== 8) speech.textContent = sc.text; // scene 8 sets its own innerHTML
-    dots.forEach((d, idx) => d.classList.toggle('on', idx === i));
-    document.getElementById('back').style.visibility = i === 0 ? 'hidden' : 'visible';
-    document.getElementById('next').textContent = i === scenes.length - 1 ? '↺ Start over' : 'Next ▶';
-  }
+/* ---------- HUD ---------- */
+function updateReadout(){
+  const a = state.season*TILT;
+  const frac = daylightFraction(state.latDeg, a);
+  const hrs = frac*24;
+  document.getElementById('hours').textContent =
+    `☀️ Sun is up about ${hrs.toFixed(1)} hours` + (hrs>=23.9?'  (midnight sun!)':hrs<=0.1?'  (polar night!)':'');
+  document.getElementById('barday').style.width = (frac*100).toFixed(1)+'%';
+  document.getElementById('barnight').style.width = ((1-frac)*100).toFixed(1)+'%';
+}
 
-  document.getElementById('next').onclick = () => {
-    i = (i + 1) % scenes.length;
-    render();
-  };
-  document.getElementById('back').onclick = () => {
-    if (i > 0) { i--; render(); }
-  };
-  // arrow keys + spacebar for grown-up helpers
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); document.getElementById('next').click(); }
-    if (e.key === 'ArrowLeft') document.getElementById('back').click();
-  });
+/* ---------- guided steps ---------- */
+const steps = [
+  { season:1, lat:51,
+    text:"🌍 This is Earth. It SPINS around a tilted line called its axis (the pink dashes). One full spin = one day and one night!",
+    note:"The axis is tilted 23.5° and always points the same way in space — toward the North Star (✦). It does not stand up straight." },
+  { season:1, lat:51,
+    text:"☀️ The Sun shines from the side. The half facing the Sun is DAY (bright). The half turned away is NIGHT (dark). Watch our 🏠 home spin from day into night!",
+    note:"Sunlight arrives as near-parallel rays, so exactly half the globe is lit. The day/night boundary (terminator) is the vertical line." },
+  { season:1, lat:51,
+    text:"🌻 In SUMMER our top leans TOWARD the Sun. So our home's daily circle sits mostly on the bright side — the Sun is up a long time! Long day! ☀️",
+    note:"Daylight hours = 1 − arccos(tanφ·tanδ)/π of 24h. At 51°N with δ=+23.5° that's ~16.5 h." },
+  { season:-1, lat:51,
+    text:"❄️ In WINTER our top leans AWAY from the Sun. Now our circle is mostly on the dark side — short day, long night. And the Sun is just as far away as in summer!",
+    note:"Same Earth–Sun distance; only the tilt direction changed. At 51°N with δ=−23.5° daylight is ~7.7 h. Distance does NOT cause seasons." },
+  { season:0, lat:51,
+    text:"🍂 In spring and autumn we lean NEITHER way. The circle is split evenly — day and night are about equal, 12 hours each.",
+    note:"At an equinox δ≈0, so daylight ≈ 12 h at every latitude." },
+  { season:1, lat:70,
+    text:"🥳 The MORE we lean toward the Sun, the longer the day. Way up north in midsummer the Sun never sets — the midnight sun! That biggest, sunniest day is Midsummer.",
+    note:"Above the Arctic Circle (66.5°N) in midsummer the latitude circle never crosses into the dark half → 24 h daylight." },
+];
+let si = 0;
+const dotsBox = document.getElementById('dots');
+steps.forEach(()=>{ const d=document.createElement('div'); d.className='dot'; dotsBox.appendChild(d); });
+const dotEls=[...dotsBox.children];
 
-  render();
+function applyStep(){
+  const s=steps[si];
+  state.season = s.season; state.latDeg = s.lat;
+  document.getElementById('lat').value = s.lat;
+  document.getElementById('speech').textContent = s.text;
+  document.getElementById('grownup').textContent = s.note;
+  dotEls.forEach((d,i)=>d.classList.toggle('on', i===si));
+  document.getElementById('back').style.visibility = si===0?'hidden':'visible';
+  document.getElementById('next').textContent = si===steps.length-1?'↺ Start over':'Next ▶';
+  syncSeasonButtons(); syncLatLabel(); updateReadout();
+}
+function syncSeasonButtons(){
+  document.querySelectorAll('.season').forEach(b=>
+    b.classList.toggle('on', Number(b.dataset.season)===state.season));
+}
+function syncLatLabel(){
+  const v=state.latDeg;
+  const name = v>=66.5?`Arctic (${v}°)`: v>=45?`far north (${v}°)`: v>=20?`middle (${v}°)`:`near equator (${v}°)`;
+  document.getElementById('latlbl').textContent = name;
+}
+
+document.getElementById('next').onclick=()=>{ si=(si+1)%steps.length; applyStep(); };
+document.getElementById('back').onclick=()=>{ if(si>0){si--; applyStep();} };
+document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
+  state.season=Number(b.dataset.season); syncSeasonButtons(); updateReadout();
+  const t={'1':'☀️ Summer: we lean toward the Sun → the Sun is up a long time. Long day!',
+           '0':'🍂 Spring/Autumn: we lean neither way → day and night are about equal.',
+           '-1':'❄️ Winter: we lean away from the Sun → short day, long night (same distance!).'}[b.dataset.season];
+  document.getElementById('speech').textContent=t;
+});
+document.getElementById('lat').oninput=e=>{
+  state.latDeg=Number(e.target.value); syncLatLabel(); updateReadout();
+};
+document.getElementById('playBtn').onclick=e=>{
+  state.playing=!state.playing;
+  e.target.textContent = state.playing?'⏸ Pause spin':'▶ Spin';
+};
+document.getElementById('ginfo').onclick=()=>
+  document.getElementById('grownup').classList.toggle('show');
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault(); document.getElementById('next').click();}
+  if(e.key==='ArrowLeft') document.getElementById('back').click();
+});
+
+/* ---------- main loop ---------- */
+let last=performance.now();
+function frame(now){
+  const dt=(now-last)/1000; last=now;
+  if(state.playing) state.rho = (state.rho + dt*0.7) % (2*Math.PI);
+  draw();
+  requestAnimationFrame(frame);
+}
+resize(); applyStep(); requestAnimationFrame(frame);
 </script>
 </body>
 </html>
