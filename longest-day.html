@@ -34,11 +34,12 @@
   .bar .night { background: linear-gradient(180deg,#2a356e,#161d44); }
   .barlabels { display:flex; justify-content:space-between; width:min(90%,460px); margin:3px auto 0; font-size:11px; opacity:.85; }
 
-  .homelabel {
-    position:absolute; z-index:4; transform:translate(-50%,-150%);
-    font-size:12px; font-weight:bold; white-space:nowrap; pointer-events:none;
-    text-shadow:0 1px 3px #000; display:none;
+  .needwebgl {
+    position:absolute; inset:0; display:flex; flex-direction:column; gap:6px;
+    align-items:center; justify-content:center; text-align:center;
+    font-size:clamp(16px,2.6vw,22px); font-weight:bold; line-height:1.5; padding:24px;
   }
+  .needwebgl small { opacity:.7; font-weight:normal; }
 
   .panel {
     position: sticky; bottom: 0; flex: 0 0 auto;
@@ -47,7 +48,9 @@
     display: flex; flex-direction: column; gap: 10px; align-items: center;
     box-shadow: 0 -6px 22px rgba(0,0,0,.55); z-index: 10;
   }
-  .speech { font-size: clamp(16px, 2.7vw, 23px); font-weight: bold; text-align: center; line-height: 1.35; max-width: 920px; min-height: 2.5em; display:flex; align-items:center; justify-content:center; }
+  .concepts { font-size: clamp(12px,1.9vw,15px); text-align:center; opacity:.85; line-height:1.5; }
+  .concepts b { color:#ffd93b; }
+  .caption { font-size: clamp(15px,2.5vw,21px); font-weight: bold; text-align: center; line-height: 1.3; max-width: 900px; min-height: 1.4em; }
   .grownup { font-size: clamp(11px,1.8vw,14px); opacity: .75; max-width: 880px; text-align:center; font-weight:normal; display:none; }
   .grownup.show { display:block; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items:center; }
@@ -62,21 +65,15 @@
   button.summer { background: linear-gradient(180deg,#ffb04a,#ff8a1e); box-shadow:0 4px 0 #c5670c; }
   button.winter { background: linear-gradient(180deg,#6fd0ff,#2aa6ee); box-shadow:0 4px 0 #1675ab; }
   button.equi   { background: linear-gradient(180deg,#9be36f,#5fbf3a); box-shadow:0 4px 0 #3a8a1e; }
-  button.next   { background: linear-gradient(180deg,#7ed957,#46c11a); box-shadow:0 4px 0 #2f8a10; }
   button.ghost  { background: rgba(255,255,255,.12); box-shadow:0 4px 0 rgba(0,0,0,.35); }
-  .dots { display:flex; gap:7px; }
-  .dot { width:11px; height:11px; border-radius:50%; background:#3a447a; }
-  .dot.on { background:#ffd93b; }
   .slider { display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; }
   input[type=range]{ accent-color:#ffd93b; }
 </style>
 </head>
 <body>
   <div class="stage" id="stage">
-    <canvas id="c2d"></canvas>
     <div class="titletag">🌞 Why is the day so long? 🌍</div>
     <div class="badge" id="badge">loading…</div>
-    <div class="homelabel" id="homelabel"></div>
     <div class="readout">
       <div class="hours" id="hours">☀️ Sun is up about 16 hours</div>
       <div class="bar"><div class="day" id="barday" style="width:67%"></div><div class="night" id="barnight" style="width:33%"></div></div>
@@ -85,8 +82,8 @@
   </div>
 
   <div class="panel">
-    <div class="speech" id="speech"></div>
-    <div class="grownup" id="grownup"></div>
+    <div class="concepts">🌀 Earth spins → <b>day &amp; night</b> &nbsp;·&nbsp; ☀️ Sun goes all the way around → <b>a year</b> &nbsp;·&nbsp; 🍂 tilted axis → <b>seasons</b></div>
+    <div class="caption" id="caption"></div>
     <div class="row">
       <button class="season summer on" data-season="1">☀️ Summer</button>
       <button class="season equi"   data-season="0">🍂 Spring/Autumn</button>
@@ -95,16 +92,12 @@
     </div>
     <div class="row">
       <div class="slider">🏠 Where we live:
-        <span id="latlbl" style="min-width:130px; display:inline-block">far north (51°)</span>
-        <input type="range" id="lat" min="0" max="80" value="51" />
+        <span id="latlbl" style="min-width:130px; display:inline-block">far north (59°)</span>
+        <input type="range" id="lat" min="0" max="80" value="59" />
       </div>
-    </div>
-    <div class="row">
-      <button class="ghost" id="back">⟲ Back</button>
-      <div class="dots" id="dots"></div>
-      <button class="next" id="next">Next ▶</button>
       <button class="ghost" id="ginfo">🧑‍🏫 Grown-up facts</button>
     </div>
+    <div class="grownup" id="grownup"></div>
   </div>
 
 <script>
@@ -117,7 +110,7 @@
      (north pole leans toward the Sun in summer).
 =================================================================== */
 const TILT = 23.5 * Math.PI/180;
-const state = { season: 1, latDeg: 51, rho: 0, playing: true };
+const state = { season: 1, latDeg: 59, lonDeg: 16, rho: 0, playing: true };  // home: Sweden (~Stockholm)
 
 function daylightFraction(phiDeg, a){
   const phi = phiDeg*Math.PI/180;
@@ -135,43 +128,17 @@ function updateReadout(){
   document.getElementById('barnight').style.width = ((1-frac)*100).toFixed(1)+'%';
 }
 
-/* guided steps */
-const steps = [
-  { season:1, lat:51,
-    text:"🌍 This is Earth. It SPINS around a tilted line called its axis. One full spin = one day and one night!",
-    note:"The axis is tilted 23.5° and keeps pointing the same way in space (toward the North Star). It is not upright." },
-  { season:1, lat:51,
-    text:"☀️ The Sun shines from the side. The half facing the Sun is DAY; the half turned away is NIGHT. Watch our 🏠 home spin from day into night!",
-    note:"Sunlight arrives as parallel rays, so half the globe is always lit. The soft line between light and dark is the terminator." },
-  { season:1, lat:51,
-    text:"🌻 In SUMMER our top leans TOWARD the Sun, so our home spends most of each spin on the bright side — the Sun is up a long time. Long day!",
-    note:"Daylight = 1 − arccos(tanφ·tanδ)/π of 24h. At 51°N, δ=+23.5° → ~16.5 h." },
-  { season:-1, lat:51,
-    text:"❄️ In WINTER our top leans AWAY from the Sun, so our home spends most of each spin in the dark — short day, long night. The Sun is just as far away!",
-    note:"Only the tilt direction changed, not the distance. 51°N, δ=−23.5° → ~7.7 h. Distance does NOT cause seasons." },
-  { season:0, lat:51,
-    text:"🍂 In spring and autumn we lean NEITHER way. Day and night are about equal — 12 hours each.",
-    note:"At an equinox δ≈0, so daylight ≈ 12 h everywhere." },
-  { season:1, lat:75,
-    text:"🥳 The more we lean toward the Sun, the longer the day. Far up north in midsummer the Sun never sets — the midnight sun! That longest day is Midsummer.",
-    note:"Above the Arctic Circle (66.5°N) the home's daily circle never crosses into the dark half → 24 h daylight." },
-];
-let si = 0;
-const dotsBox = document.getElementById('dots');
-steps.forEach(()=>{ const d=document.createElement('div'); d.className='dot'; dotsBox.appendChild(d); });
-const dotEls=[...dotsBox.children];
-
-function applyStep(){
-  const s=steps[si];
-  state.season=s.season; state.latDeg=s.lat;
-  document.getElementById('lat').value=s.lat;
-  document.getElementById('speech').textContent=s.text;
-  document.getElementById('grownup').textContent=s.note;
-  dotEls.forEach((d,i)=>d.classList.toggle('on', i===si));
-  document.getElementById('back').style.visibility = si===0?'hidden':'visible';
-  document.getElementById('next').textContent = si===steps.length-1?'↺ Start over':'Next ▶';
-  syncSeasonButtons(); syncLatLabel(); updateReadout();
-}
+/* short caption + grown-up note for each season (no walkthrough) */
+const CAPTION = {
+  '1':'☀️ Summer — our top leans toward the Sun, so the day is long!',
+  '0':'🍂 Spring / Autumn — we lean neither way, so day and night are equal.',
+  '-1':'❄️ Winter — our top leans away from the Sun, so the day is short.'
+};
+const NOTE = {
+  '1':'Summer = our hemisphere leans toward the Sun. Daylight = 1 − arccos(tanφ·tanδ)/π · 24h. At 59°N, δ=+23.5° → ~18.2 h.',
+  '0':'At an equinox the tilt points sideways to the Sun (δ≈0) → about 12 h of daylight everywhere.',
+  '-1':'Winter = our hemisphere leans away. 59°N, δ=−23.5° → ~5.8 h. The Sun is the SAME distance — only the tilt direction relative to the Sun changes.'
+};
 function syncSeasonButtons(){
   document.querySelectorAll('.season').forEach(b=>
     b.classList.toggle('on', Number(b.dataset.season)===state.season));
@@ -181,111 +148,21 @@ function syncLatLabel(){
   const name = v>=66.5?`Arctic (${v}°)`: v>=45?`far north (${v}°)`: v>=20?`middle (${v}°)`:`near equator (${v}°)`;
   document.getElementById('latlbl').textContent=name;
 }
-document.getElementById('next').onclick=()=>{ si=(si+1)%steps.length; applyStep(); };
-document.getElementById('back').onclick=()=>{ if(si>0){si--; applyStep();} };
+function applySeason(){
+  const k=String(state.season);
+  document.getElementById('caption').textContent=CAPTION[k];
+  document.getElementById('grownup').textContent=NOTE[k];
+  syncSeasonButtons(); updateReadout();
+}
+// called once at boot to paint the initial UI
+function applyStep(){ applySeason(); syncLatLabel(); }
 document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
-  state.season=Number(b.dataset.season); syncSeasonButtons(); updateReadout();
-  document.getElementById('speech').textContent={
-    '1':'☀️ Summer: we lean toward the Sun → the Sun is up a long time. Long day!',
-    '0':'🍂 Spring/Autumn: we lean neither way → day and night are about equal.',
-    '-1':'❄️ Winter: we lean away from the Sun → short day, long night (same distance!).'
-  }[b.dataset.season];
+  state.season=Number(b.dataset.season); applySeason();
 });
 document.getElementById('lat').oninput=e=>{ state.latDeg=Number(e.target.value); syncLatLabel(); updateReadout(); };
 document.getElementById('playBtn').onclick=e=>{ state.playing=!state.playing; e.target.textContent=state.playing?'⏸ Pause spin':'▶ Spin'; };
 document.getElementById('ginfo').onclick=()=>document.getElementById('grownup').classList.toggle('show');
-document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault(); document.getElementById('next').click();}
-  if(e.key==='ArrowLeft') document.getElementById('back').click();
-});
 
-/* ===================================================================
-   RENDERER A  — vector-continents canvas (offline fallback)
-=================================================================== */
-const Fallback = (() => {
-  const cnv = document.getElementById('c2d');
-  const ctx = cnv.getContext('2d');
-  let W,H,DPR,R,cx,cy;
-  function resize(){
-    DPR=window.devicePixelRatio||1; W=cnv.clientWidth; H=cnv.clientHeight;
-    cnv.width=W*DPR; cnv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
-    R=Math.min(W*0.20,H*0.34); cx=W*0.62; cy=H*0.50;
-  }
-  // simplified continents as [lat,lon] outline loops (degrees)
-  const LAND = [
-    [[70,-160],[60,-95],[48,-125],[30,-115],[18,-100],[10,-84],[8,-78],[-5,-80],[-20,-70],[-40,-73],[-52,-70],[-35,-58],[-12,-38],[0,-50],[12,-60],[25,-80],[30,-95],[48,-66],[60,-65],[72,-100]],
-    [[71,8],[60,5],[50,-8],[36,-6],[36,10],[30,32],[12,44],[0,42],[-15,40],[-34,20],[-34,18],[-20,12],[5,9],[15,-16],[28,-14],[44,-9],[58,4]],
-    [[68,60],[60,30],[45,30],[40,50],[25,60],[20,72],[8,78],[20,88],[10,98],[22,90],[35,122],[45,135],[62,160],[72,110],[78,70]],
-    [[-12,114],[-20,114],[-35,118],[-38,140],[-28,153],[-16,146],[-12,132]],
-  ];
-  function axisFrame(a){ return { n:[-Math.sin(a),0,Math.cos(a)], e1:[Math.cos(a),0,Math.sin(a)], e2:[0,1,0] }; }
-  function pt(phi,rho,F){const cp=Math.cos(phi),sp=Math.sin(phi),cr=Math.cos(rho),sr=Math.sin(rho);
-    return [sp*F.n[0]+cp*(cr*F.e1[0]+sr*F.e2[0]), sp*F.n[1]+cp*(cr*F.e1[1]+sr*F.e2[1]), sp*F.n[2]+cp*(cr*F.e1[2]+sr*F.e2[2])];}
-  // place a fixed geographic point (lat,lon) on the spinning globe
-  function geo(latDeg,lonDeg,rho,F){
-    const phi=latDeg*Math.PI/180, lam=lonDeg*Math.PI/180;
-    return pt(phi, rho+lam, F);
-  }
-  function S(p){ return [cx+p[0]*R, cy-p[2]*R]; }
-  function draw(){
-    const a=state.season*TILT, F=axisFrame(a);
-    ctx.clearRect(0,0,W,H);
-    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#070b22'); g.addColorStop(1,'#121a44');
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    // sun + rays
-    const sunX=Math.max(70,cx-R*2.7), sunY=cy, sr=Math.min(R*0.8,64);
-    ctx.fillStyle='#ffd11a'; ctx.shadowColor='#ffd11a'; ctx.shadowBlur=40;
-    ctx.beginPath(); ctx.arc(sunX,sunY,sr,0,7); ctx.fill(); ctx.shadowBlur=0;
-    ctx.strokeStyle='rgba(255,224,90,.5)'; ctx.lineWidth=3; ctx.fillStyle='rgba(255,224,90,.5)';
-    for(let k=-3;k<=3;k++){const ry=sunY+k*(R*0.42),x0=sunX+sr+12,x1=cx-R-14;
-      ctx.beginPath(); ctx.moveTo(x0,ry); ctx.lineTo(x1,ry); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x1,ry); ctx.lineTo(x1-12,ry-7); ctx.lineTo(x1-12,ry+7); ctx.fill();}
-    // ocean disk, day/night halves
-    ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
-    ctx.fillStyle='#0c1336'; ctx.fillRect(cx,cy-R,R,2*R);
-    const dg=ctx.createLinearGradient(cx-R,0,cx,0); dg.addColorStop(0,'#1f6fb0'); dg.addColorStop(1,'#3f9ad8');
-    ctx.fillStyle=dg; ctx.fillRect(cx-R,cy-R,R,2*R);
-    // continents
-    for(const loop of LAND){
-      let started=false;
-      ctx.beginPath();
-      for(const [la,lo] of loop){ const p=geo(la,lo,state.rho,F); if(p[1]<0){ continue; } const [sx,sy]=S(p); if(!started){ctx.moveTo(sx,sy);started=true;} else ctx.lineTo(sx,sy); }
-      if(started){ ctx.closePath();
-        // shade land by whether its centroid is lit — approx per-vertex via gradient: simple two-tone
-        ctx.fillStyle='#3ea757'; ctx.globalAlpha=0.95; ctx.fill();
-        ctx.globalAlpha=1; }
-    }
-    // darken the night (right) half over land+sea
-    ctx.fillStyle='rgba(6,9,30,.62)'; ctx.fillRect(cx,cy-R,R,2*R);
-    ctx.restore();
-    // terminator + outline
-    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy-R); ctx.lineTo(cx,cy+R); ctx.stroke();
-    ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
-    // axis + star
-    const top=[F.n[0]*R*1.5,0,F.n[2]*R*1.5], bot=[-F.n[0]*R*1.5,0,-F.n[2]*R*1.5];
-    const [tx,ty]=S(top),[bx,by]=S(bot);
-    ctx.strokeStyle='#ff6b9d'; ctx.lineWidth=4; ctx.setLineDash([8,6]); ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(tx,ty); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='#fff'; ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.fillText('✦',tx,ty-6);
-    // home ring + pin
-    const phi=state.latDeg*Math.PI/180; let prev=null;
-    for(let i=0;i<=120;i++){ const r=i/120*2*Math.PI, p=pt(phi,r,F),[sx,sy]=S(p);
-      if(prev){ ctx.strokeStyle=p[1]>0?'rgba(255,255,255,.85)':'rgba(255,255,255,.18)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(prev[0],prev[1]); ctx.lineTo(sx,sy); ctx.stroke(); } prev=[sx,sy]; }
-    const ph=pt(phi,state.rho,F),[hx,hy]=S(ph), lit=ph[0]<0, front=ph[1]>=0;
-    ctx.globalAlpha=front?1:0.4; ctx.fillStyle=lit?'#ffd93b':'#9fb0e6'; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(hx,hy,9,0,7); ctx.fill(); ctx.stroke(); ctx.font='14px sans-serif'; ctx.fillText('🏠',hx,hy); ctx.globalAlpha=1;
-    ctx.fillStyle=lit?'#ffd93b':'#9fb0e6'; ctx.font='bold 13px sans-serif'; ctx.textAlign='left';
-    ctx.fillText(lit?'  ← home: DAY ☀️':'  ← home: NIGHT 🌙',hx+8,hy-12); ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font='bold 14px sans-serif';
-    ctx.fillText(state.season>0?'leaning TOWARD the Sun':state.season<0?'leaning AWAY from the Sun':'leaning neither way', cx, cy+R+26);
-    ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='12px sans-serif';
-    ctx.fillText('(the Sun stays the SAME distance away all year)', cx, cy+R+46);
-  }
-  return { start(){ document.getElementById('homelabel').style.display='none'; cnv.style.display='block'; resize(); window.addEventListener('resize',resize);
-    document.getElementById('badge').textContent='🌍 simple globe (offline)';
-    let last=performance.now();
-    (function loop(now){ const dt=(now-last)/1000; last=now; if(state.playing) state.rho=(state.rho+dt*0.7)%(2*Math.PI); draw(); requestAnimationFrame(loop); })(performance.now());
-  }};
-})();
 
 /* ===================================================================
    RENDERER C  — Three.js textured globe (preferred)
@@ -297,22 +174,40 @@ function startThree(){
   renderer.setSize(stage.clientWidth, stage.clientHeight);
   renderer.domElement.style.position='absolute'; renderer.domElement.style.inset='0';
   stage.insertBefore(renderer.domElement, stage.firstChild.nextSibling);
-  document.getElementById('c2d').style.display='none';
 
   const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(40, stage.clientWidth/stage.clientHeight, 0.1, 100);
-  camera.position.set(0,0,7);
+  const camera=new THREE.PerspectiveCamera(42, stage.clientWidth/stage.clientHeight, 0.1, 100);
+  camera.position.set(0,3.0,8.2); camera.lookAt(0,0,0);   // slightly raised: Sun's orbit reads as a ring
 
-  // Sun = directional light from the LEFT (travels +x); lit hemisphere x<0
-  const sun=new THREE.DirectionalLight(0xffffff, 1.25); sun.position.set(-10,0,0); scene.add(sun);
-  scene.add(new THREE.AmbientLight(0x223355, 0.6));
-  const sunDir=new THREE.Vector3(-1,0,0); // direction toward the Sun
+  // Direction from Earth (centre) toward the Sun. The Earth + atmosphere shaders shade
+  // themselves from this, so no scene lights are needed. Updated each frame from the Sun's orbit.
+  const sunDir=new THREE.Vector3(1,0,0);
+  const ORBIT=5.2;   // radius of the Sun's path around the Earth
 
-  // visible Sun ball on the left
-  const sunBall=new THREE.Mesh(new THREE.SphereGeometry(0.9,32,32), new THREE.MeshBasicMaterial({color:0xffd11a}));
-  sunBall.position.set(-6.2,0,0); scene.add(sunBall);
-  const glow=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffe680, opacity:0.5, transparent:true, blending:THREE.AdditiveBlending}));
-  glow.scale.set(4,4,1); sunBall.add(glow);
+  // iconic Sun: a camera-facing sprite (glowing disc + rays) plus a bright core, orbiting the Earth
+  const sunGroup=new THREE.Group(); scene.add(sunGroup);
+  function makeSunTexture(){
+    const s=256, cv=document.createElement('canvas'); cv.width=cv.height=s; const c=cv.getContext('2d'), cx=s/2, cy=s/2;
+    const g=c.createRadialGradient(cx,cy,0,cx,cy,s/2);
+    g.addColorStop(0,'rgba(255,244,190,1)'); g.addColorStop(0.32,'rgba(255,212,40,0.95)');
+    g.addColorStop(0.6,'rgba(255,170,20,0.25)'); g.addColorStop(1,'rgba(255,160,0,0)');
+    c.fillStyle=g; c.fillRect(0,0,s,s);
+    c.strokeStyle='rgba(255,215,70,0.95)'; c.lineWidth=7; c.lineCap='round';
+    for(let k=0;k<12;k++){ const a=k/12*2*Math.PI;
+      c.beginPath(); c.moveTo(cx+Math.cos(a)*s*0.31, cy+Math.sin(a)*s*0.31);
+      c.lineTo(cx+Math.cos(a)*s*0.46, cy+Math.sin(a)*s*0.46); c.stroke(); }
+    return new THREE.CanvasTexture(cv);
+  }
+  const sunSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:makeSunTexture(), transparent:true, blending:THREE.AdditiveBlending, depthWrite:false}));
+  sunSprite.scale.set(2.8,2.8,1); sunGroup.add(sunSprite);
+  const sunCore=new THREE.Mesh(new THREE.SphereGeometry(0.52,32,32), new THREE.MeshBasicMaterial({color:0xffe79a}));
+  sunGroup.add(sunCore);
+
+  // faint orbit ring (the Sun's yearly path)
+  (function(){ const seg=128, p=[];
+    for(let k=0;k<=seg;k++){ const a=k/seg*2*Math.PI; p.push(Math.cos(a)*ORBIT,0,Math.sin(a)*ORBIT); }
+    const geo=new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(p,3));
+    scene.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x4a5680}))); })();
 
   // starfield
   (function(){ const g=new THREE.BufferGeometry(), n=600, pos=new Float32Array(n*3);
@@ -324,39 +219,44 @@ function startThree(){
   // tilt group (axis lean) -> spin mesh (rotation about tilted axis)
   const tiltGroup=new THREE.Group(); scene.add(tiltGroup);
   const spin=new THREE.Group(); tiltGroup.add(spin);
-  const RADIUS=2;
+  const RADIUS=1.5;   // 25% smaller than before (was 2)
 
   // textures
-  const base='https://unpkg.com/three@0.128.0/examples/textures/planets/';
+  const base='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';
   const loader=new THREE.TextureLoader(); loader.crossOrigin='anonymous';
   const black=new THREE.DataTexture(new Uint8Array([0,0,0,255]),1,1,THREE.RGBAFormat); black.needsUpdate=true;
   function tex(file){ return new Promise(res=>loader.load(base+file, t=>res(t), undefined, ()=>res(black))); }
 
-  Promise.all([tex('earth_atmos_2048.jpg'), tex('earth_lights_2048.png'), tex('earth_clouds_1024.png')])
-   .then(([day,night,clouds])=>{
-    // Earth shader: own day/night terminator from sunDir + city lights on dark side
+  Promise.all([tex('earth_atmos_2048.jpg')])
+   .then(([day])=>{
+    // Earth shader: stylized "cartoon" day/night from sunDir — bright warm day, deep-blue night, crisp divide
     const earthMat=new THREE.ShaderMaterial({
-      uniforms:{ dayTex:{value:day}, nightTex:{value:night}, sunDir:{value:sunDir} },
+      uniforms:{ dayTex:{value:day}, sunDir:{value:sunDir} },
       vertexShader:`
         varying vec2 vUv; varying vec3 vWN;
         void main(){ vUv=uv; vWN=mat3(modelMatrix)*normal;
           gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
       fragmentShader:`
-        uniform sampler2D dayTex, nightTex; uniform vec3 sunDir;
+        uniform sampler2D dayTex; uniform vec3 sunDir;
         varying vec2 vUv; varying vec3 vWN;
         void main(){
-          float i=dot(normalize(vWN), normalize(sunDir));
-          float d=smoothstep(-0.08,0.12,i);
-          vec3 dayC=texture2D(dayTex,vUv).rgb*(0.25+0.85*clamp(i,0.0,1.0));
-          vec3 nightC=texture2D(nightTex,vUv).rgb*1.6 + vec3(0.01,0.02,0.05);
-          gl_FragColor=vec4(mix(nightC,dayC,d),1.0);
+          float i=dot(normalize(vWN), normalize(sunDir));   // >0 day, <0 night
+          float d=smoothstep(-0.12,0.12,i);                 // soft dusk band, not a hard cut
+          vec3 tex=texture2D(dayTex,vUv).rgb;
+          // DAY: bright, warm, vivid across the whole lit half
+          vec3 dayC=clamp(tex*1.45 + vec3(0.07,0.05,0.0), 0.0, 1.0);
+          // NIGHT: dimmed cool-blue Earth — continents stay readable, just dark (no city lights)
+          float lum=dot(tex, vec3(0.299,0.587,0.114));
+          vec3 nightC=tex*0.13 + vec3(0.0,0.004,0.016);
+          nightC=mix(nightC, vec3(lum)*vec3(0.30,0.40,0.70), 0.40);
+          vec3 col=mix(nightC, dayC, d);
+          // gentle warm glow along the terminator
+          float edge=1.0 - smoothstep(0.0,0.10,abs(i));
+          col += vec3(0.40,0.30,0.12) * edge * 0.25;
+          gl_FragColor=vec4(col,1.0);
         }`,
     });
     const earth=new THREE.Mesh(new THREE.SphereGeometry(RADIUS,64,64), earthMat); spin.add(earth);
-    // clouds (lit by the real directional light -> dark on night side)
-    const cloudMesh=new THREE.Mesh(new THREE.SphereGeometry(RADIUS*1.01,48,48),
-      new THREE.MeshLambertMaterial({map:clouds, alphaMap:clouds, transparent:true, opacity:0.5, depthWrite:false}));
-    spin.add(cloudMesh); window.__clouds=cloudMesh;
     // atmosphere rim glow
     const atm=new THREE.Mesh(new THREE.SphereGeometry(RADIUS*1.15,48,48), new THREE.ShaderMaterial({
       side:THREE.BackSide, transparent:true, blending:THREE.AdditiveBlending,
@@ -367,49 +267,57 @@ function startThree(){
     document.getElementById('badge').textContent='🛰️ 3D globe';
    });
 
-  // rotation axis line + north star + home marker
+  // rotation axis line + home marker
   const axisLine=new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-RADIUS*1.6,0),new THREE.Vector3(0,RADIUS*1.6,0)]),
     new THREE.LineDashedMaterial({color:0xff6b9d, dashSize:0.18, gapSize:0.12}));
   axisLine.computeLineDistances(); tiltGroup.add(axisLine);
-  const star=new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff})); star.scale.set(0.5,0.5,1); star.position.set(0,RADIUS*1.7,0); tiltGroup.add(star);
 
-  const homeMarker=new THREE.Mesh(new THREE.SphereGeometry(0.09,16,16), new THREE.MeshBasicMaterial({color:0xffd93b}));
-  spin.add(homeMarker);
-  const homeLabel=document.getElementById('homelabel');
+  // home: a plain red pushpin that sticks straight out of the surface (tip on the ground, head outward)
+  const pin=new THREE.Group();
+  const pinRed=new THREE.MeshBasicMaterial({color:0xff2d2d});
+  const pinCone=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.20,20), pinRed);
+  pinCone.rotation.x=Math.PI; pinCone.position.y=0.10;            // apex (tip) at y=0, widening outward
+  const pinHead=new THREE.Mesh(new THREE.SphereGeometry(0.085,20,20), pinRed);
+  pinHead.position.y=0.24;
+  const pinHalo=new THREE.Mesh(new THREE.SphereGeometry(0.10,20,20),
+    new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.BackSide})); // thin white outline for contrast
+  pinHalo.position.y=0.24;
+  pin.add(pinCone,pinHead,pinHalo);
+  spin.add(pin);
 
+  const PIN_UP=new THREE.Vector3(0,1,0), homePos=new THREE.Vector3();
   function setHomeLatitude(){
     const phi=state.latDeg*Math.PI/180;
-    homeMarker.position.set(0, Math.sin(phi)*RADIUS*1.03, Math.cos(phi)*RADIUS*1.03); // prime meridian
+    // map (lat, lon) onto the textured sphere using Three.js SphereGeometry's UV convention:
+    // longitude 0° (Greenwich) sits at +X, +90°E at -Z, -90°W at +Z. (u = 0.5 + lon/360)
+    const ang=2*Math.PI*(0.5 + state.lonDeg/360), cphi=Math.cos(phi);
+    homePos.set(-Math.cos(ang)*cphi*RADIUS, Math.sin(phi)*RADIUS, Math.sin(ang)*cphi*RADIUS);
+    pin.position.copy(homePos);
+    pin.quaternion.setFromUnitVectors(PIN_UP, homePos.clone().normalize()); // point straight out from the centre
   }
 
   function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
   window.addEventListener('resize',resize);
 
   const wp=new THREE.Vector3();
+  // Sun's orbit angle (xz-plane), kept in [0,π] so the swing always passes across the FRONT (+z):
+  // Summer = 0 (+x, right) · Equinox = π/2 (+z, front) · Winter = π (-x, left).
+  const seasonAngle = s => s>0 ? 0 : s<0 ? Math.PI : Math.PI/2;
+  let sunAng = seasonAngle(state.season);
   let last=performance.now();
   function loop(now){
     const dt=(now-last)/1000; last=now;
-    if(state.playing) state.rho=(state.rho+dt*0.7)%(2*Math.PI);
-    tiltGroup.rotation.z = state.season*TILT;   // lean toward(-x)/away(+x) the Sun
-    spin.rotation.y = state.rho;                // spin about the tilted axis
-    if(window.__clouds) window.__clouds.rotation.y = state.rho*1.04;
+    if(state.playing) state.rho=(state.rho+dt*0.35)%(2*Math.PI);   // Earth spins -> day & night
+    // glide the Sun along its orbit toward the current season's spot (the yearly journey)
+    const target=seasonAngle(state.season);
+    sunAng += (target - sunAng) * Math.min(1, dt*2.2);
+    sunGroup.position.set(Math.cos(sunAng)*ORBIT, 0, Math.sin(sunAng)*ORBIT);
+    sunDir.copy(sunGroup.position).normalize();
+    // Earth keeps a FIXED tilt (north leans toward +x); seasons come from WHERE the Sun is, not re-tilting
+    tiltGroup.rotation.z = -TILT;
+    spin.rotation.y = state.rho;
     setHomeLatitude();
-
-    // home day/night + on-screen label
-    homeMarker.getWorldPosition(wp);
-    const lit = wp.x < 0;                        // lit hemisphere is x<0
-    homeMarker.material.color.set(lit?0xffd93b:0x9fb0e6);
-    const ndc=wp.clone().project(camera);
-    const facing = wp.z > 0;                     // front hemisphere toward camera
-    if(facing && ndc.z<1){
-      homeLabel.style.display='block';
-      homeLabel.style.left=((ndc.x*0.5+0.5)*stage.clientWidth)+'px';
-      homeLabel.style.top =((-ndc.y*0.5+0.5)*stage.clientHeight)+'px';
-      homeLabel.textContent = lit?'🏠 home: DAY ☀️':'🏠 home: NIGHT 🌙';
-      homeLabel.style.color = lit?'#ffd93b':'#9fb0e6';
-    } else homeLabel.style.display='none';
-
     renderer.render(scene,camera);
     requestAnimationFrame(loop);
   }
@@ -420,17 +328,24 @@ function startThree(){
    BOOT: try C, fall back to A
 =================================================================== */
 function hasWebGL(){ try{ const c=document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl'))); }catch(e){ return false; } }
+function needsWebGL(){
+  document.getElementById('badge').textContent='⚠️ needs 3D';
+  const s=document.getElementById('stage');
+  const m=document.createElement('div'); m.className='needwebgl';
+  m.innerHTML='🌍🔆<br>This needs a 3D-capable browser with an internet connection.<br><small>(it loads a 3D globe)</small>';
+  s.appendChild(m);
+}
 let __booted=false;
 function boot(){
   if(__booted) return; __booted=true;
   applyStep();
   if(typeof THREE!=='undefined' && hasWebGL()){
-    try{ startThree(); return; }catch(e){ console.warn('3D failed, using fallback', e); }
+    try{ startThree(); return; }catch(e){ console.warn('3D init failed', e); }
   }
-  Fallback.start();
+  needsWebGL();
 }
 </script>
-<!-- try to load Three.js (UMD global). If it fails (offline/blocked), boot() falls back to canvas. -->
+<!-- load Three.js (UMD global). If it fails (offline/blocked), boot() shows a 'needs 3D' message. -->
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js" onload="boot()" onerror="boot()"></script>
 <script>
   // safety net: if the CDN tag never fires (e.g. blocked silently), boot anyway after a short delay
