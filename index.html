@@ -45,7 +45,7 @@
   }
   .concepts {
     position:absolute; z-index:3; pointer-events:none; display:none;
-    transform: translate(-50%, 6px); white-space:nowrap;
+    transform: translate(-50%, calc(100% + 6px)); white-space:nowrap;
     font-size: clamp(11px,1.8vw,14px); opacity:.9;
     text-shadow: 0 2px 6px rgba(0,0,0,.85);
   }
@@ -120,7 +120,7 @@ const STR = {
     docTitle:'Warum sind die Sommertage so lang?',
     title:'Warum sind die Sommertage so lang?',
     concepts:'🍂 Die geneigte <b>Erdachse</b> → <b>Jahreszeiten</b>',
-    hemi:'🌍 Hier siehst du die Nordhälfte der Erde. Südlich des Äquators sind die Jahreszeiten umgekehrt.',
+    hemi:'🌍 Nordhalbkugel — südlich des Äquators ist alles umgekehrt.',
     barNight:'🌙 Nacht', barDay:'ein Tag = 24 h',
     home:'🏠 wir wohnen in:',
     play:'▶ Drehen', pause:'⏸ Drehung anhalten',
@@ -305,7 +305,7 @@ function startThree(){
   // rotation axis line + home marker
   const axisLine=new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-RADIUS*1.6,0),new THREE.Vector3(0,RADIUS*1.6,0)]),
-    new THREE.LineDashedMaterial({color:0xff6b9d, dashSize:0.18, gapSize:0.12}));
+    new THREE.LineDashedMaterial({color:0xff6b9d, dashSize:0.18, gapSize:0.12, linewidth:2}));
   axisLine.computeLineDistances(); tiltGroup.add(axisLine);
 
   // "geneigte Erdachse" label, pinned to the screen position of the axis' bottom tip
