@@ -33,13 +33,6 @@
             font-size: 20px; line-height: 1; color: #ff2d2d; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; }
   .barlabels { display:flex; justify-content:space-between; width:min(90%,460px); margin:3px auto 0; font-size:11px; opacity:.85; }
 
-  .needwebgl {
-    position:absolute; inset:0; display:flex; flex-direction:column; gap:6px;
-    align-items:center; justify-content:center; text-align:center;
-    font-size:clamp(16px,2.6vw,22px); font-weight:bold; line-height:1.5; padding:24px;
-  }
-  .needwebgl small { opacity:.7; font-weight:normal; }
-
   .panel {
     position: sticky; bottom: 0; flex: 0 0 auto;
     background: #0e1638; border-top: 5px solid #ffd93b;
@@ -161,8 +154,7 @@ const STR = {
       '-1':'❄️ Winter — unsere Seite neigt sich von der Sonne weg, darum ist der Tag kurz.'
     },
     hours:h=>`☀️ Etwa ${h} Stunden Sonne`,
-    midnightSun:'  (Mitternachtssonne!)', polarNight:'  (Polarnacht!)',
-    webgl:'🌍🔆<br>Dafür brauchst du einen 3D-fähigen Browser mit Internetverbindung.<br><small>(es lädt einen 3D-Globus)</small>'
+    midnightSun:'  (Mitternachtssonne!)', polarNight:'  (Polarnacht!)'
   }
 };
 const T = STR[LANG];
@@ -224,7 +216,7 @@ function applyLang(){
   document.getElementById('playBtn').textContent=state.playing?T.pause:T.play;
   document.querySelectorAll('.season').forEach(b=> b.textContent=T.seasons[b.dataset.season]);
 }
-// called once at boot to paint the initial UI
+// called once to paint the initial UI
 function applyStep(){ applyLang(); applySeason(); }
 document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
   state.season=Number(b.dataset.season); applySeason();
@@ -423,31 +415,8 @@ function startThree(){
   resize(); requestAnimationFrame(loop);
 }
 
-/* ===================================================================
-   BOOT: try C, fall back to A
-=================================================================== */
-function hasWebGL(){ try{ const c=document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl'))); }catch(e){ return false; } }
-function needsWebGL(){
-  const s=document.getElementById('stage');
-  const m=document.createElement('div'); m.className='needwebgl';
-  m.innerHTML=T.webgl;
-  s.appendChild(m);
-}
-let __booted=false;
-function boot(){
-  if(__booted) return; __booted=true;
-  applyStep();
-  if(typeof THREE!=='undefined' && hasWebGL()){
-    try{ startThree(); return; }catch(e){ console.warn('3D init failed', e); }
-  }
-  needsWebGL();
-}
 </script>
-<!-- load Three.js (UMD global). If it fails (offline/blocked), boot() shows a 'needs 3D' message. -->
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js" onload="boot()" onerror="boot()"></script>
-<script>
-  // safety net: if the CDN tag never fires (e.g. blocked silently), boot anyway after a short delay
-  setTimeout(boot, 2500);
-</script>
+<!-- load Three.js (UMD global), then start the 3D scene -->
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js" onload="startThree()"></script>
 </body>
 </html>
