@@ -43,7 +43,12 @@
     display: flex; flex-direction: column; gap: 10px; align-items: center;
     box-shadow: 0 -6px 22px rgba(0,0,0,.55); z-index: 10;
   }
-  .concepts { font-size: clamp(12px,1.9vw,15px); text-align:center; opacity:.85; line-height:1.5; }
+  .concepts {
+    position:absolute; z-index:3; pointer-events:none; display:none;
+    transform: translate(-50%, 6px); white-space:nowrap;
+    font-size: clamp(11px,1.8vw,14px); opacity:.9;
+    text-shadow: 0 2px 6px rgba(0,0,0,.85);
+  }
   .concepts b { color:#ffd93b; }
   .caption { font-size: clamp(15px,2.5vw,21px); font-weight: bold; text-align: center; line-height: 1.3; max-width: 900px; min-height: 1.4em; }
   .hemi { font-size: clamp(11px,1.7vw,13px); opacity:.6; text-align:center; }
@@ -66,6 +71,7 @@
 <body>
   <div class="stage" id="stage">
     <div class="titletag" id="title"></div>
+    <div class="concepts" id="concepts"></div>
     <div class="readout">
       <div class="hours" id="hours"></div>
       <div class="bar"><div class="day" id="barday" style="width:67%"></div><div class="night" id="barnight" style="width:33%"></div></div>
@@ -74,7 +80,6 @@
   </div>
 
   <div class="panel">
-    <div class="concepts" id="concepts"></div>
     <div class="caption" id="caption"></div>
     <div class="row">
       <button class="season summer on" data-season="1"></button>
@@ -303,6 +308,16 @@ function startThree(){
     new THREE.LineDashedMaterial({color:0xff6b9d, dashSize:0.18, gapSize:0.12}));
   axisLine.computeLineDistances(); tiltGroup.add(axisLine);
 
+  // "geneigte Erdachse" label, pinned to the screen position of the axis' bottom tip
+  const note=document.getElementById('concepts');
+  const axisTip=new THREE.Vector3(0,-RADIUS*1.6,0), tipNDC=new THREE.Vector3();
+  note.style.display='block';
+  function placeAxisNote(){
+    tipNDC.copy(axisTip).applyMatrix4(tiltGroup.matrixWorld).project(camera);
+    note.style.left=(tipNDC.x*0.5+0.5)*stage.clientWidth +'px';
+    note.style.top =(-tipNDC.y*0.5+0.5)*stage.clientHeight+'px';
+  }
+
   // home: a plain red pushpin that sticks straight out of the surface (tip on the ground, head outward)
   const pin=new THREE.Group();
   const pinRed=new THREE.MeshBasicMaterial({color:0xff2d2d});
@@ -349,6 +364,7 @@ function startThree(){
     spin.rotation.y = state.rho;
     setHomeLatitude();
     renderer.render(scene,camera);
+    placeAxisNote();
     requestAnimationFrame(loop);
   }
   resize(); requestAnimationFrame(loop);
