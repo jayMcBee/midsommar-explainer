@@ -218,7 +218,7 @@ function startThree(){
 
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(42, stage.clientWidth/stage.clientHeight, 0.1, 100);
-  camera.position.set(0,3.0,8.2); camera.lookAt(0,0,0);   // slightly raised: Sun's orbit reads as a ring
+  camera.position.set(0,3.0,8.2); camera.lookAt(0,0,0);   // slightly raised for a 3D view of the tilted globe
 
   // Direction from Earth (centre) toward the Sun. The Earth + atmosphere shaders shade
   // themselves from this, so no scene lights are needed. Updated each frame from the Sun's orbit.
@@ -243,12 +243,6 @@ function startThree(){
   sunSprite.scale.set(2.8,2.8,1); sunGroup.add(sunSprite);
   const sunCore=new THREE.Mesh(new THREE.SphereGeometry(0.52,32,32), new THREE.MeshBasicMaterial({color:0xffe79a}));
   sunGroup.add(sunCore);
-
-  // faint orbit ring (the Sun's yearly path)
-  (function(){ const seg=128, p=[];
-    for(let k=0;k<=seg;k++){ const a=k/seg*2*Math.PI; p.push(Math.cos(a)*ORBIT,0,Math.sin(a)*ORBIT); }
-    const geo=new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(p,3));
-    scene.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x4a5680}))); })();
 
   // starfield
   (function(){ const g=new THREE.BufferGeometry(), n=600, pos=new Float32Array(n*3);
