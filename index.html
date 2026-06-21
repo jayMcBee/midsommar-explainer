@@ -233,7 +233,12 @@ function startThree(){
   // Direction from Earth (centre) toward the Sun. The Earth + atmosphere shaders shade
   // themselves from this, so no scene lights are needed. Updated each frame from the Sun's orbit.
   const sunDir=new THREE.Vector3(1,0,0);
-  const ORBIT=5.2;   // radius of the Sun's path around the Earth
+  // radius of the Sun's path; pulled in on narrow (portrait) screens so the Sun stays in frame
+  let orbit=5.2;
+  function orbitFor(aspect){
+    const halfH=Math.atan(Math.tan(0.5*42*Math.PI/180)*aspect);   // half horizontal FOV
+    return Math.max(2.7, Math.min(5.2, 8.73*Math.tan(0.97*halfH)));
+  }
 
   // iconic Sun: a camera-facing sprite (glowing disc + rays) plus a bright core, orbiting the Earth
   const sunGroup=new THREE.Group(); scene.add(sunGroup);
@@ -250,8 +255,8 @@ function startThree(){
     return new THREE.CanvasTexture(cv);
   }
   const sunSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:makeSunTexture(), transparent:true, blending:THREE.AdditiveBlending, depthWrite:false}));
-  sunSprite.scale.set(2.8,2.8,1); sunGroup.add(sunSprite);
-  const sunCore=new THREE.Mesh(new THREE.SphereGeometry(0.52,32,32), new THREE.MeshBasicMaterial({color:0xffe79a}));
+  sunSprite.scale.set(2.1,2.1,1); sunGroup.add(sunSprite);
+  const sunCore=new THREE.Mesh(new THREE.SphereGeometry(0.39,32,32), new THREE.MeshBasicMaterial({color:0xffe79a}));
   sunGroup.add(sunCore);
 
   // starfield
@@ -366,7 +371,7 @@ function startThree(){
     marker.style.left=(x*100).toFixed(2)+'%';
   }
 
-  function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); orbit=orbitFor(camera.aspect); }
   window.addEventListener('resize',resize);
 
   const wp=new THREE.Vector3();
@@ -381,7 +386,7 @@ function startThree(){
     // glide the Sun along its orbit toward the current season's spot (the yearly journey)
     const target=seasonAngle(state.season);
     sunAng += (target - sunAng) * Math.min(1, dt*2.2);
-    sunGroup.position.set(Math.cos(sunAng)*ORBIT, 0, Math.sin(sunAng)*ORBIT);
+    sunGroup.position.set(Math.cos(sunAng)*orbit, 0, Math.sin(sunAng)*orbit);
     sunDir.copy(sunGroup.position).normalize();
     // Earth keeps a FIXED tilt (north leans toward +x); seasons come from WHERE the Sun is, not re-tilting
     tiltGroup.rotation.z = -TILT;
