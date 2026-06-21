@@ -123,12 +123,10 @@
 
 <script>
 /* ===================================================================
-   SHARED STATE, PHYSICS, UI  (renderer-agnostic)
-   World convention used everywhere:
-     x = right,  sunlight comes from the LEFT and travels +x,
-     so the lit hemisphere is x < 0.
-     Earth axis tilts within the screen plane by  a = season * TILT
-     (north pole leans toward the Sun in summer).
+   STATE, PHYSICS, COPY
+   Model: the Earth keeps a FIXED tilt; the Sun moves around it to set
+   the season. Daylight length follows from latitude and the Sun's
+   declination (season * TILT). All user-facing copy lives in STR/T.
 =================================================================== */
 const TILT = 23.5 * Math.PI/180;
 const state = { season: 1, latDeg: 59.33, lonDeg: 18.07, rho: 0, playing: true };  // home: Stockholm (default)
@@ -236,7 +234,7 @@ applyStep();
 
 
 /* ===================================================================
-   RENDERER C  — Three.js textured globe (preferred)
+   3D SCENE — Three.js textured globe
 =================================================================== */
 function startThree(){
   const stage=document.getElementById('stage');
@@ -289,7 +287,7 @@ function startThree(){
   // tilt group (axis lean) -> spin mesh (rotation about tilted axis)
   const tiltGroup=new THREE.Group(); scene.add(tiltGroup);
   const spin=new THREE.Group(); tiltGroup.add(spin);
-  const RADIUS=1.5;   // 25% smaller than before (was 2)
+  const RADIUS=1.5;   // Earth radius in scene units
 
   // textures
   const base='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';
@@ -394,7 +392,6 @@ function startThree(){
   function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); orbit=orbitFor(camera.aspect); }
   window.addEventListener('resize',resize);
 
-  const wp=new THREE.Vector3();
   // Sun's orbit angle (xz-plane), kept in [0,π] so the swing always passes across the FRONT (+z):
   // Summer = 0 (+x, right) · Equinox = π/2 (+z, front) · Winter = π (-x, left).
   const seasonAngle = s => s>0 ? 0 : s<0 ? Math.PI : Math.PI/2;
