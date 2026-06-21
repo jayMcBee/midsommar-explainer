@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Why is the Day So Long? ☀️ A Spinning-Earth Story</title>
+<title>Warum sind die Sommertage so lang?</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { height: 100%; }
@@ -21,11 +21,6 @@
     background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
     padding: 6px 16px; border-radius: 30px; font-size: clamp(13px,2vw,18px);
     font-weight: bold; white-space: nowrap; z-index:3;
-  }
-  .badge {
-    position:absolute; top:10px; right:12px; z-index:3;
-    font-size:11px; opacity:.7; background:rgba(255,255,255,.1);
-    padding:4px 9px; border-radius:20px;
   }
   .readout { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); text-align: center; width: min(92%, 620px); z-index:3; pointer-events:none; }
   .hours { font-size: clamp(18px, 3.6vw, 30px); font-weight: bold; color: #ffd93b; text-shadow: 0 2px 6px rgba(0,0,0,.7); }
@@ -51,8 +46,7 @@
   .concepts { font-size: clamp(12px,1.9vw,15px); text-align:center; opacity:.85; line-height:1.5; }
   .concepts b { color:#ffd93b; }
   .caption { font-size: clamp(15px,2.5vw,21px); font-weight: bold; text-align: center; line-height: 1.3; max-width: 900px; min-height: 1.4em; }
-  .grownup { font-size: clamp(11px,1.8vw,14px); opacity: .75; max-width: 880px; text-align:center; font-weight:normal; display:none; }
-  .grownup.show { display:block; }
+  .hemi { font-size: clamp(11px,1.7vw,13px); opacity:.6; text-align:center; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items:center; }
   button {
     font-family: inherit; font-weight: bold; font-size: clamp(14px,2.2vw,18px);
@@ -72,32 +66,30 @@
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="titletag">🌞 Why is the day so long? 🌍</div>
-    <div class="badge" id="badge">loading…</div>
+    <div class="titletag" id="title"></div>
     <div class="readout">
-      <div class="hours" id="hours">☀️ Sun is up about 16 hours</div>
+      <div class="hours" id="hours"></div>
       <div class="bar"><div class="day" id="barday" style="width:67%"></div><div class="night" id="barnight" style="width:33%"></div></div>
-      <div class="barlabels"><span>🌙 night</span><span>one day = 24 h</span><span>night 🌙</span></div>
+      <div class="barlabels"><span id="lblNightL"></span><span id="lblDay"></span><span id="lblNightR"></span></div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="concepts">🌀 Earth spins → <b>day &amp; night</b> &nbsp;·&nbsp; ☀️ Sun goes all the way around → <b>a year</b> &nbsp;·&nbsp; 🍂 tilted axis → <b>seasons</b></div>
+    <div class="concepts" id="concepts"></div>
     <div class="caption" id="caption"></div>
     <div class="row">
-      <button class="season summer on" data-season="1">☀️ Summer</button>
-      <button class="season equi"   data-season="0">🍂 Spring/Autumn</button>
-      <button class="season winter" data-season="-1">❄️ Winter</button>
-      <button class="ghost" id="playBtn">⏸ Pause spin</button>
+      <button class="season summer on" data-season="1"></button>
+      <button class="season equi"   data-season="0"></button>
+      <button class="season winter" data-season="-1"></button>
+      <button class="ghost" id="playBtn"></button>
     </div>
     <div class="row">
-      <div class="slider">🏠 Where we live:
-        <span id="latlbl" style="min-width:130px; display:inline-block">far north (59°)</span>
+      <div class="slider"><span id="homeLbl"></span>
+        <span id="latlbl" style="min-width:150px; display:inline-block"></span>
         <input type="range" id="lat" min="0" max="80" value="59" />
       </div>
-      <button class="ghost" id="ginfo">🧑‍🏫 Grown-up facts</button>
     </div>
-    <div class="grownup" id="grownup"></div>
+    <div class="hemi" id="hemi"></div>
   </div>
 
 <script>
@@ -112,6 +104,31 @@
 const TILT = 23.5 * Math.PI/180;
 const state = { season: 1, latDeg: 59, lonDeg: 16, rho: 0, playing: true };  // home: Sweden (~Stockholm)
 
+/* ---- all user-facing copy lives here; add an 'en' block + toggle to go bilingual ---- */
+const LANG = 'de';
+const STR = {
+  de: {
+    docTitle:'Warum sind die Sommertage so lang?',
+    title:'Warum sind die Sommertage so lang?',
+    concepts:'🍂 Die geneigte <b>Erdachse</b> → <b>Jahreszeiten</b>',
+    hemi:'🌍 Hier siehst du die Nordhälfte der Erde. Südlich des Äquators sind die Jahreszeiten umgekehrt.',
+    barNight:'🌙 Nacht', barDay:'ein Tag = 24 h',
+    home:'🏠 Wo wir wohnen:',
+    play:'▶ Drehen', pause:'⏸ Drehung anhalten',
+    seasons:{ '1':'☀️ Sommer', '0':'🍂 Frühling/Herbst', '-1':'❄️ Winter' },
+    caption:{
+      '1':'☀️ Sommer — unsere Seite neigt sich zur Sonne, darum ist der Tag lang!',
+      '0':'🍂 Frühling / Herbst — wir neigen uns zu keiner Seite, Tag und Nacht sind gleich lang.',
+      '-1':'❄️ Winter — unsere Seite neigt sich von der Sonne weg, darum ist der Tag kurz.'
+    },
+    hours:h=>`☀️ Etwa ${h} Stunden Sonne`,
+    midnightSun:'  (Mitternachtssonne!)', polarNight:'  (Polarnacht!)',
+    latName:v=> v>=66.5?`Arktis (${v}°)`: v>=45?`hoher Norden (${v}°)`: v>=20?`Mitte (${v}°)`:`nahe am Äquator (${v}°)`,
+    webgl:'🌍🔆<br>Dafür brauchst du einen 3D-fähigen Browser mit Internetverbindung.<br><small>(es lädt einen 3D-Globus)</small>'
+  }
+};
+const T = STR[LANG];
+
 function daylightFraction(phiDeg, a){
   const phi = phiDeg*Math.PI/180;
   let K = Math.tan(phi)*Math.tan(a);
@@ -122,46 +139,45 @@ function updateReadout(){
   const frac = daylightFraction(state.latDeg, state.season*TILT);
   const hrs = frac*24;
   document.getElementById('hours').textContent =
-    `☀️ Sun is up about ${hrs.toFixed(1)} hours` +
-    (hrs>=23.9?'  (midnight sun!)':hrs<=0.1?'  (polar night!)':'');
+    T.hours(hrs.toFixed(1)) +
+    (hrs>=23.9?T.midnightSun:hrs<=0.1?T.polarNight:'');
   document.getElementById('barday').style.width = (frac*100).toFixed(1)+'%';
   document.getElementById('barnight').style.width = ((1-frac)*100).toFixed(1)+'%';
 }
-
-/* short caption + grown-up note for each season (no walkthrough) */
-const CAPTION = {
-  '1':'☀️ Summer — our top leans toward the Sun, so the day is long!',
-  '0':'🍂 Spring / Autumn — we lean neither way, so day and night are equal.',
-  '-1':'❄️ Winter — our top leans away from the Sun, so the day is short.'
-};
-const NOTE = {
-  '1':'Summer = our hemisphere leans toward the Sun. Daylight = 1 − arccos(tanφ·tanδ)/π · 24h. At 59°N, δ=+23.5° → ~18.2 h.',
-  '0':'At an equinox the tilt points sideways to the Sun (δ≈0) → about 12 h of daylight everywhere.',
-  '-1':'Winter = our hemisphere leans away. 59°N, δ=−23.5° → ~5.8 h. The Sun is the SAME distance — only the tilt direction relative to the Sun changes.'
-};
 function syncSeasonButtons(){
   document.querySelectorAll('.season').forEach(b=>
     b.classList.toggle('on', Number(b.dataset.season)===state.season));
 }
 function syncLatLabel(){
-  const v=state.latDeg;
-  const name = v>=66.5?`Arctic (${v}°)`: v>=45?`far north (${v}°)`: v>=20?`middle (${v}°)`:`near equator (${v}°)`;
-  document.getElementById('latlbl').textContent=name;
+  document.getElementById('latlbl').textContent=T.latName(state.latDeg);
 }
 function applySeason(){
-  const k=String(state.season);
-  document.getElementById('caption').textContent=CAPTION[k];
-  document.getElementById('grownup').textContent=NOTE[k];
+  document.getElementById('caption').textContent=T.caption[String(state.season)];
   syncSeasonButtons(); updateReadout();
 }
+// paint every static string from the table (single source of truth for a future EN toggle)
+function applyLang(){
+  document.title=T.docTitle;
+  document.getElementById('title').textContent=T.title;
+  document.getElementById('concepts').innerHTML=T.concepts;
+  document.getElementById('hemi').textContent=T.hemi;
+  document.getElementById('lblNightL').textContent=T.barNight;
+  document.getElementById('lblNightR').textContent=T.barNight.split(' ').reverse().join(' ');
+  document.getElementById('lblDay').textContent=T.barDay;
+  document.getElementById('homeLbl').textContent=T.home;
+  document.getElementById('playBtn').textContent=state.playing?T.pause:T.play;
+  document.querySelectorAll('.season').forEach(b=> b.textContent=T.seasons[b.dataset.season]);
+}
 // called once at boot to paint the initial UI
-function applyStep(){ applySeason(); syncLatLabel(); }
+function applyStep(){ applyLang(); applySeason(); syncLatLabel(); }
 document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
   state.season=Number(b.dataset.season); applySeason();
 });
 document.getElementById('lat').oninput=e=>{ state.latDeg=Number(e.target.value); syncLatLabel(); updateReadout(); };
-document.getElementById('playBtn').onclick=e=>{ state.playing=!state.playing; e.target.textContent=state.playing?'⏸ Pause spin':'▶ Spin'; };
-document.getElementById('ginfo').onclick=()=>document.getElementById('grownup').classList.toggle('show');
+document.getElementById('playBtn').onclick=e=>{ state.playing=!state.playing; e.target.textContent=state.playing?T.pause:T.play; };
+
+// paint the UI immediately, independent of the Three.js CDN load
+applyStep();
 
 
 /* ===================================================================
@@ -227,8 +243,8 @@ function startThree(){
   const black=new THREE.DataTexture(new Uint8Array([0,0,0,255]),1,1,THREE.RGBAFormat); black.needsUpdate=true;
   function tex(file){ return new Promise(res=>loader.load(base+file, t=>res(t), undefined, ()=>res(black))); }
 
-  Promise.all([tex('earth_atmos_2048.jpg')])
-   .then(([day])=>{
+  tex('earth_atmos_2048.jpg')
+   .then(day=>{
     // Earth shader: stylized "cartoon" day/night from sunDir — bright warm day, deep-blue night, crisp divide
     const earthMat=new THREE.ShaderMaterial({
       uniforms:{ dayTex:{value:day}, sunDir:{value:sunDir} },
@@ -245,7 +261,7 @@ function startThree(){
           vec3 tex=texture2D(dayTex,vUv).rgb;
           // DAY: bright, warm, vivid across the whole lit half
           vec3 dayC=clamp(tex*1.45 + vec3(0.07,0.05,0.0), 0.0, 1.0);
-          // NIGHT: dimmed cool-blue Earth — continents stay readable, just dark (no city lights)
+          // NIGHT: dimmed cool-blue Earth — continents stay readable, just dark
           float lum=dot(tex, vec3(0.299,0.587,0.114));
           vec3 nightC=tex*0.13 + vec3(0.0,0.004,0.016);
           nightC=mix(nightC, vec3(lum)*vec3(0.30,0.40,0.70), 0.40);
@@ -264,7 +280,6 @@ function startThree(){
       vertexShader:`varying vec3 vWN; varying vec3 vP; void main(){ vWN=mat3(modelMatrix)*normal; vec4 wp=modelMatrix*vec4(position,1.0); vP=wp.xyz; gl_Position=projectionMatrix*viewMatrix*wp; }`,
       fragmentShader:`varying vec3 vWN; varying vec3 vP; uniform vec3 sunDir; void main(){ vec3 v=normalize(cameraPosition-vP); float rim=pow(1.0-max(dot(normalize(vWN),v),0.0),3.0); float lit=clamp(dot(normalize(vWN),normalize(sunDir)),0.0,1.0); gl_FragColor=vec4(0.35,0.6,1.0,1.0)*rim*(0.25+0.75*lit); }`,
     })); scene.add(atm);
-    document.getElementById('badge').textContent='🛰️ 3D globe';
    });
 
   // rotation axis line + home marker
@@ -329,10 +344,9 @@ function startThree(){
 =================================================================== */
 function hasWebGL(){ try{ const c=document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl'))); }catch(e){ return false; } }
 function needsWebGL(){
-  document.getElementById('badge').textContent='⚠️ needs 3D';
   const s=document.getElementById('stage');
   const m=document.createElement('div'); m.className='needwebgl';
-  m.innerHTML='🌍🔆<br>This needs a 3D-capable browser with an internet connection.<br><small>(it loads a 3D globe)</small>';
+  m.innerHTML=T.webgl;
   s.appendChild(m);
 }
 let __booted=false;
