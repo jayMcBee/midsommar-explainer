@@ -60,11 +60,10 @@
     transition: transform .08s, box-shadow .08s;
   }
   button:active { transform: translateY(3px); box-shadow: 0 1px 0 #232f80; }
-  button.season.on, button.city.on, button.midsommar.on { outline: 3px solid #ffd93b; }
+  button.season.on, button.city.on { outline: 3px solid #ffd93b; }
   button.summer { background: linear-gradient(180deg,#ffb04a,#ff8a1e); box-shadow:0 4px 0 #c5670c; }
   button.winter { background: linear-gradient(180deg,#6fd0ff,#2aa6ee); box-shadow:0 4px 0 #1675ab; }
   button.equi   { background: linear-gradient(180deg,#9be36f,#5fbf3a); box-shadow:0 4px 0 #3a8a1e; }
-  button.midsommar { background: linear-gradient(180deg,#ff9ecd,#ff5ea8); box-shadow:0 4px 0 #c23b7a; }
   button.ghost  { background: rgba(255,255,255,.12); box-shadow:0 4px 0 rgba(0,0,0,.35); }
   .rowlbl { font-size: clamp(14px,2.2vw,18px); opacity:.9; }
 </style>
@@ -87,7 +86,6 @@
       <button class="season summer on" data-season="1"></button>
       <button class="season equi"   data-season="0"></button>
       <button class="season winter" data-season="-1"></button>
-      <button class="midsommar" id="midsommarBtn"></button>
       <button class="ghost" id="playBtn"></button>
     </div>
     <div class="row" id="cityrow">
@@ -126,8 +124,7 @@ const STR = {
     barNight:'🌙 Nacht', barDay:'ein Tag = 24 h',
     home:'🏠 wir wohnen in:',
     play:'▶ Drehen', pause:'⏸ Drehung anhalten',
-    seasons:{ '1':'☀️ Sommer', '0':'🍂 Frühling/Herbst', '-1':'❄️ Winter' },
-    midsommar:'🌼 Midsommar',
+    seasons:{ '1':'☀️ (Mid-)Sommer', '0':'🍂 Frühling/Herbst', '-1':'❄️ Winter' },
     caption:{
       '1':'☀️ Sommer — unsere Seite neigt sich zur Sonne, darum ist der Tag lang!',
       '0':'🍂 Frühling / Herbst — wir neigen uns zu keiner Seite, Tag und Nacht sind gleich lang.',
@@ -159,17 +156,12 @@ function syncSeasonButtons(){
   document.querySelectorAll('.season').forEach(b=>
     b.classList.toggle('on', Number(b.dataset.season)===state.season));
 }
-// Midsommar = the preset "summer + Stockholm"; light its button when we're in that state
-function syncMidsommar(){
-  const active = state.season===1 && state.latDeg===CITIES[DEFAULT_CITY].lat;
-  document.getElementById('midsommarBtn').classList.toggle('on', active);
-}
 // set the home city by index: state + button highlight + readout
 function selectCity(i){
   const c=CITIES[i];
   state.latDeg=c.lat; state.lonDeg=c.lon;
   document.querySelectorAll('.city').forEach((x,j)=>x.classList.toggle('on',j===i));
-  updateReadout(); syncMidsommar();
+  updateReadout();
 }
 // build the home-city toggle once from CITIES, then select the default
 function buildCities(){
@@ -184,7 +176,7 @@ function buildCities(){
 }
 function applySeason(){
   document.getElementById('caption').textContent=T.caption[String(state.season)];
-  syncSeasonButtons(); updateReadout(); syncMidsommar();
+  syncSeasonButtons(); updateReadout();
 }
 // paint every static string from the table (single source of truth for a future EN toggle)
 function applyLang(){
@@ -198,7 +190,6 @@ function applyLang(){
   document.getElementById('homeLbl').textContent=T.home;
   document.getElementById('playBtn').textContent=state.playing?T.pause:T.play;
   document.querySelectorAll('.season').forEach(b=> b.textContent=T.seasons[b.dataset.season]);
-  document.getElementById('midsommarBtn').textContent=T.midsommar;
 }
 // called once at boot to paint the initial UI
 function applyStep(){ applyLang(); applySeason(); }
@@ -206,8 +197,6 @@ document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
   state.season=Number(b.dataset.season); applySeason();
 });
 document.getElementById('playBtn').onclick=e=>{ state.playing=!state.playing; e.target.textContent=state.playing?T.pause:T.play; };
-// Midsommar preset: jump to summer + Stockholm (the longest day, far north)
-document.getElementById('midsommarBtn').onclick=()=>{ state.season=1; applySeason(); selectCity(DEFAULT_CITY); };
 
 // build city toggle once, then paint the UI immediately (independent of the Three.js CDN load)
 buildCities();
