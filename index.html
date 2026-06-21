@@ -65,7 +65,7 @@
   button.winter { background: linear-gradient(180deg,#6fd0ff,#2aa6ee); box-shadow:0 4px 0 #1675ab; }
   button.equi   { background: linear-gradient(180deg,#9be36f,#5fbf3a); box-shadow:0 4px 0 #3a8a1e; }
   button.ghost  { background: rgba(255,255,255,.12); box-shadow:0 4px 0 rgba(0,0,0,.35); }
-  .rowlbl { font-size:13px; opacity:.9; }
+  .rowlbl { font-size: clamp(14px,2.2vw,18px); opacity:.9; }
 </style>
 </head>
 <body>
@@ -81,6 +81,7 @@
 
   <div class="panel">
     <div class="caption" id="caption"></div>
+    <div class="hemi" id="hemi"></div>
     <div class="row">
       <button class="season summer on" data-season="1"></button>
       <button class="season equi"   data-season="0"></button>
@@ -90,7 +91,6 @@
     <div class="row" id="cityrow">
       <span class="rowlbl" id="homeLbl"></span>
     </div>
-    <div class="hemi" id="hemi"></div>
   </div>
 
 <script>
