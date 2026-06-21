@@ -22,15 +22,15 @@
     padding: 6px 16px; border-radius: 30px; font-size: clamp(13px,2vw,18px);
     font-weight: bold; white-space: nowrap; z-index:3;
   }
-  .readout { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); text-align: center; width: min(92%, 620px); z-index:3; pointer-events:none; }
+  .readout { position: absolute; top: 66px; left: 50%; transform: translateX(-50%); text-align: center; width: min(92%, 620px); z-index:3; pointer-events:none; }
   .hours { margin-top: 8px; font-size: clamp(15px, 2.8vw, 24px); font-weight: bold; color: #ffd93b; text-shadow: 0 2px 6px rgba(0,0,0,.7); }
   .gauge { position: relative; width: min(90%, 460px); margin: 8px auto 0; }
   .bar { width: 100%; height: 16px; border-radius: 12px; overflow: hidden; display: flex; border: 2px solid rgba(255,255,255,.4); }
   .bar .day { background: linear-gradient(180deg,#ffe98a,#ffd11a); }
   .bar .night { background: linear-gradient(180deg,#2a356e,#161d44); }
   /* pointer riding the gauge — shows where our city is in its day/night cycle */
-  .marker { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); display: none;
-            font-size: 13px; line-height: 1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; }
+  .marker { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); display: none;
+            font-size: 20px; line-height: 1; color: #ff2d2d; text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none; }
   .barlabels { display:flex; justify-content:space-between; width:min(90%,460px); margin:3px auto 0; font-size:11px; opacity:.85; }
 
   .needwebgl {
