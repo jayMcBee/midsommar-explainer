@@ -55,13 +55,12 @@
     transition: transform .08s, box-shadow .08s;
   }
   button:active { transform: translateY(3px); box-shadow: 0 1px 0 #232f80; }
-  button.season.on { outline: 3px solid #ffd93b; }
+  button.season.on, button.city.on { outline: 3px solid #ffd93b; }
   button.summer { background: linear-gradient(180deg,#ffb04a,#ff8a1e); box-shadow:0 4px 0 #c5670c; }
   button.winter { background: linear-gradient(180deg,#6fd0ff,#2aa6ee); box-shadow:0 4px 0 #1675ab; }
   button.equi   { background: linear-gradient(180deg,#9be36f,#5fbf3a); box-shadow:0 4px 0 #3a8a1e; }
   button.ghost  { background: rgba(255,255,255,.12); box-shadow:0 4px 0 rgba(0,0,0,.35); }
-  .slider { display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; }
-  input[type=range]{ accent-color:#ffd93b; }
+  .rowlbl { font-size:13px; opacity:.9; }
 </style>
 </head>
 <body>
@@ -83,11 +82,8 @@
       <button class="season winter" data-season="-1"></button>
       <button class="ghost" id="playBtn"></button>
     </div>
-    <div class="row">
-      <div class="slider"><span id="homeLbl"></span>
-        <span id="latlbl" style="min-width:150px; display:inline-block"></span>
-        <input type="range" id="lat" min="0" max="80" value="59" />
-      </div>
+    <div class="row" id="cityrow">
+      <span class="rowlbl" id="homeLbl"></span>
     </div>
     <div class="hemi" id="hemi"></div>
   </div>
@@ -102,7 +98,15 @@
      (north pole leans toward the Sun in summer).
 =================================================================== */
 const TILT = 23.5 * Math.PI/180;
-const state = { season: 1, latDeg: 59, lonDeg: 16, rho: 0, playing: true };  // home: Sweden (~Stockholm)
+const state = { season: 1, latDeg: 59.33, lonDeg: 18.07, rho: 0, playing: true };  // home: Stockholm (default)
+
+/* selectable home cities, ordered by daylight contrast (short -> long summer) */
+const CITIES = [
+  { name:'München',   lat:48.14, lon:11.58 },
+  { name:'Hamburg',   lat:53.55, lon: 9.99 },
+  { name:'Stockholm', lat:59.33, lon:18.07 }
+];
+const DEFAULT_CITY = 2;  // Stockholm — the dramatic midsommar case
 
 /* ---- all user-facing copy lives here; add an 'en' block + toggle to go bilingual ---- */
 const LANG = 'de';
@@ -113,7 +117,7 @@ const STR = {
     concepts:'🍂 Die geneigte <b>Erdachse</b> → <b>Jahreszeiten</b>',
     hemi:'🌍 Hier siehst du die Nordhälfte der Erde. Südlich des Äquators sind die Jahreszeiten umgekehrt.',
     barNight:'🌙 Nacht', barDay:'ein Tag = 24 h',
-    home:'🏠 Wo wir wohnen:',
+    home:'🏠 wir wohnen in:',
     play:'▶ Drehen', pause:'⏸ Drehung anhalten',
     seasons:{ '1':'☀️ Sommer', '0':'🍂 Frühling/Herbst', '-1':'❄️ Winter' },
     caption:{
@@ -123,7 +127,6 @@ const STR = {
     },
     hours:h=>`☀️ Etwa ${h} Stunden Sonne`,
     midnightSun:'  (Mitternachtssonne!)', polarNight:'  (Polarnacht!)',
-    latName:v=> v>=66.5?`Arktis (${v}°)`: v>=45?`hoher Norden (${v}°)`: v>=20?`Mitte (${v}°)`:`nahe am Äquator (${v}°)`,
     webgl:'🌍🔆<br>Dafür brauchst du einen 3D-fähigen Browser mit Internetverbindung.<br><small>(es lädt einen 3D-Globus)</small>'
   }
 };
@@ -139,7 +142,7 @@ function updateReadout(){
   const frac = daylightFraction(state.latDeg, state.season*TILT);
   const hrs = frac*24;
   document.getElementById('hours').textContent =
-    T.hours(hrs.toFixed(1)) +
+    T.hours(Math.round(hrs)) +
     (hrs>=23.9?T.midnightSun:hrs<=0.1?T.polarNight:'');
   document.getElementById('barday').style.width = (frac*100).toFixed(1)+'%';
   document.getElementById('barnight').style.width = ((1-frac)*100).toFixed(1)+'%';
@@ -148,8 +151,20 @@ function syncSeasonButtons(){
   document.querySelectorAll('.season').forEach(b=>
     b.classList.toggle('on', Number(b.dataset.season)===state.season));
 }
-function syncLatLabel(){
-  document.getElementById('latlbl').textContent=T.latName(state.latDeg);
+// build the home-city toggle once from CITIES; clicking sets the home and updates the readout
+function buildCities(){
+  const row=document.getElementById('cityrow');
+  CITIES.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='city'+(i===DEFAULT_CITY?' on':'');
+    b.textContent=c.name;
+    b.onclick=()=>{
+      state.latDeg=c.lat; state.lonDeg=c.lon;
+      document.querySelectorAll('.city').forEach(x=>x.classList.toggle('on',x===b));
+      updateReadout();
+    };
+    row.appendChild(b);
+  });
 }
 function applySeason(){
   document.getElementById('caption').textContent=T.caption[String(state.season)];
@@ -169,14 +184,14 @@ function applyLang(){
   document.querySelectorAll('.season').forEach(b=> b.textContent=T.seasons[b.dataset.season]);
 }
 // called once at boot to paint the initial UI
-function applyStep(){ applyLang(); applySeason(); syncLatLabel(); }
+function applyStep(){ applyLang(); applySeason(); }
 document.querySelectorAll('.season').forEach(b=> b.onclick=()=>{
   state.season=Number(b.dataset.season); applySeason();
 });
-document.getElementById('lat').oninput=e=>{ state.latDeg=Number(e.target.value); syncLatLabel(); updateReadout(); };
 document.getElementById('playBtn').onclick=e=>{ state.playing=!state.playing; e.target.textContent=state.playing?T.pause:T.play; };
 
-// paint the UI immediately, independent of the Three.js CDN load
+// build city toggle once, then paint the UI immediately (independent of the Three.js CDN load)
+buildCities();
 applyStep();
 
 
